@@ -15,7 +15,7 @@
     "install-ui": "cd ui && npm install",
     "build": "npm run build-ui && npm run build-server",
     "build-server": "cd server && npm run build",
-    "build-ui": "cd ui && npm run build",
+    "build-ui": "cd ui && npm run build-heroku",
     "heroku-postbuild": "echo 'Installing dependencies...' && npm run install-server && npm run install-ui && echo 'Setting up caching...' && mkdir -p ui/.next && mkdir -p $HOME/.npm/.next/cache && ln -sf $HOME/.npm/.next/cache ui/.next/cache && echo 'Creating cache directory...' && mkdir -p server/cache && mkdir -p server/dist/utils && echo 'Building UI and server...' && npm run build && echo 'Ensuring cache setup...' && cd server && node ensure-cache-dir.js",
     "clean": "rimraf server/dist ui/.next",
     "test-integrated": "npm run build && npm start"

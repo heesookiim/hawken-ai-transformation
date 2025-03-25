@@ -1,0 +1,38 @@
+[
+  {
+    "id": "JC_AI_1",
+    "title": "AI-Powered Energy Consumption Analysis and Recommendation Engine",
+    "description": "Leverage LLMs to analyze building data (energy consumption, occupancy, environmental conditions) and generate personalized recommendations for energy optimization. The LLM will ingest data from various building systems, identify patterns of energy waste, and generate reports with specific, actionable recommendations for clients. This includes suggesting adjustments to HVAC schedules, lighting controls, and equipment upgrades. The LLM will also be trained on a knowledge base of energy efficiency best practices and regulatory requirements to ensure recommendations are compliant and effective. The LLM adds unique value by identifying subtle patterns and generating human-readable reports that are tailored to the specific needs of each client, going beyond simple data aggregation and visualization. This addresses challenge #1 and aligns with industry insight #1.",
+    "impact": "High",
+    "complexity": "Medium",
+    "timeframe": "Medium-term",
+    "category": "text analysis"
+  },
+  {
+    "id": "JC_AI_2",
+    "title": "LLM-Driven Predictive Maintenance Report Generator",
+    "description": "Develop an LLM-based system that analyzes equipment data (sensor readings, maintenance logs, operational parameters) to predict potential equipment failures and generate proactive maintenance schedules. The LLM will be trained on historical data and failure patterns to identify anomalies and predict when maintenance is required. The system will generate detailed reports outlining the predicted failure, the recommended maintenance actions, and the potential cost savings from preventing the failure. The LLM adds unique value by providing context and justification for maintenance recommendations, improving client trust and reducing the risk of unexpected downtime. This addresses challenge #2 and aligns with industry insight #4.",
+    "impact": "High",
+    "complexity": "Medium",
+    "timeframe": "Medium-term",
+    "category": "text analysis"
+  },
+  {
+    "id": "JC_AI_3",
+    "title": "AI-Powered Personalized Recommendation and Upselling System",
+    "description": "Create an LLM-based system that analyzes client building profiles, usage patterns, and industry trends to generate personalized recommendations for upgrades, new technologies, and service contracts. The LLM will ingest data from various sources, including building management systems, client contracts, and market research reports. It will then generate tailored proposals outlining the benefits of each recommendation, the potential ROI, and the implementation steps. The LLM adds unique value by understanding the specific needs and priorities of each client and generating compelling, persuasive proposals that are more likely to result in a sale. This addresses challenge #3 and aligns with industry insight #5.",
+    "impact": "Medium",
+    "complexity": "Medium",
+    "timeframe": "Medium-term",
+    "category": "content generation"
+  },
+  {
+    "id": "JC_AI_4",
+    "title": "Image-Based Document Understanding for Building System Integration",
+    "description": "Develop an LLM-powered system that can analyze images of building system documentation (schematics, wiring diagrams, equipment manuals) to automatically extract key information and facilitate integration with Jackson Control's platform. The LLM, leveraging its visual understanding capabilities (e.g., GPT-4 Vision), will process images of documents, identify components, connections, and specifications, and generate structured data that can be used to configure and manage building systems. This reduces the manual effort required to integrate data from diverse vendors and building systems. The LLM adds unique value by automating the extraction of information from unstructured documents, enabling faster and more accurate system integration. This addresses challenge #6 and aligns with industry insight #3.",
+    "impact": "Medium",
+    "complexity": "Medium",
+    "timeframe": "Medium-term",
+    "category": "visual understanding"
+  }
+]

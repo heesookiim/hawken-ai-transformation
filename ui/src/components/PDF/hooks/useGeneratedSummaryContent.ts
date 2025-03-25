@@ -282,13 +282,9 @@ export const useGeneratedSummaryContent = (
   
   // Extract key terms from domain knowledge
   const extractKeyTerms = (domainKnowledge: string): string[] => {
-    if (!domainKnowledge) return [];
-    
-    // Look for terms in bold (markdown format) or in lists
-    const boldTermPattern = /\*\*(.*?)\*\*/g;
-    const listItemPattern = /- ([^:\n]+):/g;
-    
     const terms: string[] = [];
+    const boldTermPattern = /\*\*(.*?)\*\*/g;
+    const listItemPattern = /^\s*-\s*(.*)/gm;
     let match;
     
     // Extract bold terms
@@ -301,7 +297,8 @@ export const useGeneratedSummaryContent = (
       terms.push(match[1].trim());
     }
     
-    return [...new Set(terms)].slice(0, 10); // Remove duplicates and limit to 10 terms
+    // Use Array.from() instead of spread operator for ES5 compatibility
+    return Array.from(new Set(terms)).slice(0, 10); // Remove duplicates and limit to 10 terms
   };
 
   // Function to generate tailored executive summary content with enhanced structure
