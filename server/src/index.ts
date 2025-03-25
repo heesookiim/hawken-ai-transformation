@@ -55,8 +55,8 @@ app.use('/cache', (err: any, req: any, res: any, next: any) => {
   }
 });
 
-// Add a root route handler
-app.get('/', (req, res) => {
+// Root API endpoint (accessible at /api)
+app.get('/api', (req, res) => {
   res.json({ message: 'AI Transformation Plan Generator API is running' });
 });
 
