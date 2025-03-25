@@ -23,59 +23,52 @@ const VERBOSE_LOGGING = false;  // Set to true for detailed logs
 // Load environment variables
 dotenv.config();
 
-// Access PUBLIC_PATH with a safe fallback
-const publicPath = process.env.PUBLIC_PATH || path.join(process.cwd(), 'public');
-
+// Setup core path handling for the application
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const projectRoot = process.cwd();
+const isProduction = process.env.NODE_ENV === 'production';
 
+console.log(`Running in ${isProduction ? 'production' : 'development'} environment`);
+console.log(`Project root: ${projectRoot}`);
+
+// In production mode on Heroku, the directory structure may be different
+// We need to determine if we're in the server directory and the ui is a sibling
+const uiDirRelativeToRoot = fs.existsSync(path.join(projectRoot, 'ui')) 
+  ? 'ui' 
+  : fs.existsSync(path.join(projectRoot, '..', 'ui')) 
+    ? '../ui' 
+    : 'ui';
+
+console.log(`UI directory relative to root: ${uiDirRelativeToRoot}`);
+
+// Set paths for the UI build based on the found ui directory
+const UI_BUILD_PATH = path.join(projectRoot, isProduction ? `${uiDirRelativeToRoot}/.next` : '../ui/.next');
+const UI_PUBLIC_PATH = path.join(projectRoot, isProduction ? `${uiDirRelativeToRoot}/public` : '../ui/public');
+
+// Also handle the case of Next.js standalone output
+const STANDALONE_PATH = path.join(projectRoot, isProduction ? `${uiDirRelativeToRoot}/.next/standalone` : '../ui/.next/standalone');
+
+// Check if we can find the public directory - use ENV var or calculated path
+const publicPath = process.env.PUBLIC_PATH || (fs.existsSync(UI_PUBLIC_PATH) ? UI_PUBLIC_PATH : path.join(projectRoot, 'public'));
+console.log(`Found UI public path: ${publicPath} (exists: ${fs.existsSync(publicPath)})`);
+
+// Additional check for index.html
+const indexHtmlPath = path.join(publicPath, 'index.html');
+const indexHtmlExists = fs.existsSync(indexHtmlPath);
+console.log(`Found index.html at: ${indexHtmlPath} (exists: ${indexHtmlExists})`);
+
+// The dashboard path - use relative paths with the dynamic UI dir path
+const dashboardPath = path.join(projectRoot, `${uiDirRelativeToRoot}/public`);
+console.log(`Dashboard path: ${dashboardPath} (exists: ${fs.existsSync(dashboardPath)})`);
+
+// Initialize Express app
 const app = express();
 // Use PORT env var from Heroku
 const port = process.env.PORT || 3001;
 
 app.use(cors());
 app.use(express.json());
-
-// Determine proper paths based on environment
-const projectRoot = process.cwd();
-console.log(`Running in ${process.env.NODE_ENV === 'production' ? 'production' : 'development'} environment`);
-console.log(`Project root: ${projectRoot}`);
-
-// Define UI paths and check if files exist
-// Try multiple possible paths for the UI public directory
-const possibleUIPaths = [
-  path.join(projectRoot, 'ui/public'),       // Local development structure
-  path.join(projectRoot, '../ui/public'),    // Another possible structure
-  path.join(projectRoot, 'ui', 'public'),    // Alternative notation
-  path.join(projectRoot, '..', 'ui', 'public'), // Yet another structure
-  path.join(projectRoot, '..', '..', 'ui', 'public'), // Additional possibility for Heroku
-];
-
-// Find the first existing UI path
-let uiPublicPath = '';
-let indexHtmlPath = '';
-let indexHtmlExists = false;
-
-for (const possiblePath of possibleUIPaths) {
-  if (fs.existsSync(possiblePath)) {
-    uiPublicPath = possiblePath;
-    indexHtmlPath = path.join(possiblePath, 'index.html');
-    indexHtmlExists = fs.existsSync(indexHtmlPath);
-    console.log(`Found UI public path: ${uiPublicPath} (exists: true)`);
-    console.log(`Found index.html at: ${indexHtmlPath} (exists: ${indexHtmlExists})`);
-    break;
-  }
-}
-
-// If we still don't have a valid path, use a default
-if (!uiPublicPath) {
-  // Default fallback paths
-  uiPublicPath = path.join(projectRoot, 'ui/public');
-  indexHtmlPath = path.join(uiPublicPath, 'index.html');
-  indexHtmlExists = fs.existsSync(indexHtmlPath);
-  console.log(`Using default UI public path: ${uiPublicPath} (exists: ${fs.existsSync(uiPublicPath)})`);
-  console.log(`Using default index.html at: ${indexHtmlPath} (exists: ${indexHtmlExists})`);
-}
 
 // First, serve the static index.html file directly from the root path
 app.get('/', (req, res, next) => {
@@ -139,22 +132,20 @@ app.get('/', (req, res, next) => {
 });
 
 // Then serve static files if possible
-if (fs.existsSync(uiPublicPath)) {
-  app.use(express.static(uiPublicPath));
-  console.log(`Serving static files from: ${uiPublicPath}`);
+if (fs.existsSync(UI_PUBLIC_PATH)) {
+  app.use(express.static(UI_PUBLIC_PATH));
+  console.log(`Serving static files from: ${UI_PUBLIC_PATH}`);
 }
 
 // Serve other static content
 app.use('/test-results', express.static(path.join(__dirname, '../test-results')));
 app.use('/cache', express.static(path.join(projectRoot, 'cache')));
 
-// The dashboard path - REMOVE HARDCODED PATH, use relative paths only
-const dashboardPath = path.join(projectRoot, 'ui/public');
+// Setup dashboard path
 if (fs.existsSync(dashboardPath)) {
   app.use('/dashboard', express.static(dashboardPath));
-  console.log(`Dashboard path: ${dashboardPath} (exists: ${fs.existsSync(dashboardPath)})`);
 } else {
-  console.log(`Dashboard path: ${dashboardPath} (exists: false)`);
+  console.log(`Dashboard path exists: false`);
 }
 
 // API fallback handler for root (will only be reached if index.html doesn't exist and our embedded HTML failed)
@@ -752,46 +743,30 @@ app.get('/api/*', (req, res, next) => {
 
 // After all API routes but before app.listen()
 
-// Setup for serving Next.js static files
-const isProduction = process.env.NODE_ENV === 'production';
-// Fix paths for production environment on Heroku
-const UI_BUILD_PATH = path.join(projectRoot, isProduction ? 'ui/.next' : '../ui/.next');
-const UI_PUBLIC_PATH = path.join(projectRoot, isProduction ? 'ui/public' : '../ui/public');
-
-// Check if Next.js build exists and log status
-if (fs.existsSync(UI_BUILD_PATH)) {
-  console.log('Found Next.js build at:', UI_BUILD_PATH);
-} else {
-  console.warn('Next.js build not found at:', UI_BUILD_PATH);
-  // Try alternative paths
-  const altPath = path.join(projectRoot, 'ui', '.next');
-  if (fs.existsSync(altPath)) {
-    console.log('Found Next.js build at alternative path:', altPath);
-  }
-}
-
-// Serve Next.js static files
-// Try multiple possible _next paths to handle different Next.js output structures
+// Serve static files for Next.js - check multiple possible paths
 const possibleNextPaths = [
   path.join(UI_BUILD_PATH, '_next'),
   path.join(UI_BUILD_PATH, 'standalone', '_next'),
-  path.join(UI_BUILD_PATH, 'standalone', '.next', '_next'),
-  path.join(projectRoot, 'ui', '.next', '_next')
+  path.join(STANDALONE_PATH, '_next'),
+  path.join(projectRoot, `${uiDirRelativeToRoot}`, '.next', '_next'),
+  path.join(projectRoot, `${uiDirRelativeToRoot}`, '_next'),
+  path.join(projectRoot, '..', 'ui', '.next', '_next') // Try going up one directory
 ];
 
-// Find first existing _next path and serve it
-let foundNextPath = false;
+let foundNextPath = null;
 for (const nextPath of possibleNextPaths) {
   if (fs.existsSync(nextPath)) {
+    console.log(`Found Next.js static files at: ${nextPath}`);
     app.use('/_next', express.static(nextPath));
-    console.log(`Serving Next.js static files from: ${nextPath}`);
-    foundNextPath = true;
+    foundNextPath = nextPath;
     break;
   }
 }
 
 if (!foundNextPath) {
-  console.warn('Could not find Next.js static files directory (_next)');
+  console.log('Could not find Next.js static files directory (_next)');
+  console.log('Searched in these locations:');
+  possibleNextPaths.forEach(p => console.log(` - ${p} (exists: ${fs.existsSync(p)})`));
 }
 
 // Serve static files from ui/public
