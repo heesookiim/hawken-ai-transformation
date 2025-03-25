@@ -31,6 +31,13 @@ const isProduction = process.env.NODE_ENV === 'production';
 
 console.log(`Running in ${isProduction ? 'production' : 'development'} environment`);
 console.log(`Project root: ${projectRoot}`);
+console.log(`__dirname: ${__dirname}`);
+
+// Force reset any environment variables that might contain local paths
+if (process.env.PUBLIC_PATH && process.env.PUBLIC_PATH.includes('/Users/heesookim')) {
+  console.log(`Removing hardcoded local path from PUBLIC_PATH: ${process.env.PUBLIC_PATH}`);
+  delete process.env.PUBLIC_PATH;
+}
 
 // In production mode on Heroku, the directory structure may be different
 // We need to determine if we're in the server directory and the ui is a sibling
@@ -49,9 +56,23 @@ const UI_PUBLIC_PATH = path.join(projectRoot, isProduction ? `${uiDirRelativeToR
 // Also handle the case of Next.js standalone output
 const STANDALONE_PATH = path.join(projectRoot, isProduction ? `${uiDirRelativeToRoot}/.next/standalone` : '../ui/.next/standalone');
 
-// Check if we can find the public directory - use ENV var or calculated path
-const publicPath = process.env.PUBLIC_PATH || (fs.existsSync(UI_PUBLIC_PATH) ? UI_PUBLIC_PATH : path.join(projectRoot, 'public'));
-console.log(`Found UI public path: ${publicPath} (exists: ${fs.existsSync(publicPath)})`);
+// Log paths for debugging
+console.log(`UI_BUILD_PATH: ${UI_BUILD_PATH} (exists: ${fs.existsSync(UI_BUILD_PATH)})`);
+console.log(`UI_PUBLIC_PATH: ${UI_PUBLIC_PATH} (exists: ${fs.existsSync(UI_PUBLIC_PATH)})`);
+console.log(`STANDALONE_PATH: ${STANDALONE_PATH} (exists: ${fs.existsSync(STANDALONE_PATH)})`);
+
+// Check if we can find the public directory - NEVER use a hardcoded path
+let publicPath = process.env.PUBLIC_PATH 
+  || (fs.existsSync(UI_PUBLIC_PATH) ? UI_PUBLIC_PATH : path.join(projectRoot, 'public'));
+
+// Check for hardcoded paths in publicPath
+if (publicPath.includes('/Users/heesookim')) {
+  console.error('ERROR: Found hardcoded local path in publicPath, using fallback');
+  // Force override with a Heroku-friendly path
+  publicPath = path.join(projectRoot, 'ui/public');
+}
+
+console.log(`Final UI public path: ${publicPath} (exists: ${fs.existsSync(publicPath)})`);
 
 // Additional check for index.html
 const indexHtmlPath = path.join(publicPath, 'index.html');
@@ -72,13 +93,34 @@ app.use(express.json());
 
 // First, serve the static index.html file directly from the root path
 app.get('/', (req, res, next) => {
-  if (indexHtmlExists) {
-    console.log(`Serving index.html from path: ${indexHtmlPath}`);
-    return res.sendFile(indexHtmlPath);
+  // Check multiple possible locations for index.html
+  const possibleIndexPaths = [
+    indexHtmlPath, 
+    path.join(UI_PUBLIC_PATH, 'index.html'),
+    path.join(projectRoot, 'ui/public/index.html'),
+    path.join(projectRoot, '../ui/public/index.html'),
+    path.join(dashboardPath, 'index.html')
+  ];
+  
+  // Find the first existing index.html
+  let foundIndexPath = null;
+  for (const indexPath of possibleIndexPaths) {
+    if (fs.existsSync(indexPath)) {
+      console.log(`Found index.html at path: ${indexPath}`);
+      foundIndexPath = indexPath;
+      break;
+    }
+  }
+  
+  if (foundIndexPath) {
+    return res.sendFile(foundIndexPath);
   }
   
   // If index.html doesn't exist, try serving embedded HTML
-  console.log('Index.html not found, trying embedded HTML');
+  console.log('Index.html not found in any location, tried these paths:');
+  possibleIndexPaths.forEach(p => console.log(` - ${p} (exists: ${fs.existsSync(p)})`));
+  
+  console.log('Serving embedded HTML');
   const embeddedHtml = `<!DOCTYPE html>
   <html>
   <head>
