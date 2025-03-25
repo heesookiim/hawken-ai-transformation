@@ -41,25 +41,108 @@ console.log(`Running in ${process.env.NODE_ENV === 'production' ? 'production' :
 console.log(`Project root: ${projectRoot}`);
 
 // Define UI paths and check if files exist
-const uiPublicPath = path.join(projectRoot, 'ui/public');
-const indexHtmlPath = path.join(uiPublicPath, 'index.html');
-const indexHtmlExists = fs.existsSync(indexHtmlPath);
+// Try multiple possible paths for the UI public directory
+const possibleUIPaths = [
+  path.join(projectRoot, 'ui/public'),       // Local development structure
+  path.join(projectRoot, '../ui/public'),    // Another possible structure
+  path.join(projectRoot, 'ui', 'public'),    // Alternative notation
+  path.join(projectRoot, '..', 'ui', 'public'), // Yet another structure
+];
 
-console.log(`UI public path: ${uiPublicPath} (exists: ${fs.existsSync(uiPublicPath)})`);
-console.log(`index.html path: ${indexHtmlPath} (exists: ${indexHtmlExists})`);
+// Find the first existing UI path
+let uiPublicPath = '';
+let indexHtmlPath = '';
+let indexHtmlExists = false;
+
+for (const possiblePath of possibleUIPaths) {
+  if (fs.existsSync(possiblePath)) {
+    uiPublicPath = possiblePath;
+    indexHtmlPath = path.join(possiblePath, 'index.html');
+    indexHtmlExists = fs.existsSync(indexHtmlPath);
+    console.log(`Found UI public path: ${uiPublicPath} (exists: true)`);
+    console.log(`Found index.html at: ${indexHtmlPath} (exists: ${indexHtmlExists})`);
+    break;
+  }
+}
+
+// If we still don't have a valid path, use a default
+if (!uiPublicPath) {
+  // Default fallback paths
+  uiPublicPath = path.join(projectRoot, 'ui/public');
+  indexHtmlPath = path.join(uiPublicPath, 'index.html');
+  indexHtmlExists = fs.existsSync(indexHtmlPath);
+  console.log(`Using default UI public path: ${uiPublicPath} (exists: ${fs.existsSync(uiPublicPath)})`);
+  console.log(`Using default index.html at: ${indexHtmlPath} (exists: ${indexHtmlExists})`);
+}
 
 // First, serve the static index.html file directly from the root path
 app.get('/', (req, res, next) => {
   if (indexHtmlExists) {
-    console.log('Serving index.html from the root path');
+    console.log(`Serving index.html from path: ${indexHtmlPath}`);
     return res.sendFile(indexHtmlPath);
   }
-  // If no index.html, pass to next middleware
-  next();
+  
+  // If index.html doesn't exist, try serving embedded HTML
+  console.log('Index.html not found, trying embedded HTML');
+  const embeddedHtml = `<!DOCTYPE html>
+  <html>
+  <head>
+      <title>AI Transformation Plan Generator</title>
+      <style>
+          body {
+              font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+              max-width: 800px;
+              margin: 0 auto;
+              padding: 2rem;
+              line-height: 1.6;
+              color: #333;
+          }
+          .container {
+              background-color: #f9f9f9;
+              border-radius: 8px;
+              padding: 2rem;
+              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+          }
+          h1 {
+              color: #2563eb;
+              margin-top: 0;
+          }
+          code {
+              background-color: #f0f0f0;
+              padding: 0.2rem 0.4rem;
+              border-radius: 4px;
+              font-family: monospace;
+          }
+      </style>
+  </head>
+  <body>
+      <div class="container">
+          <h1>AI Transformation Plan Generator</h1>
+          <h2>API Mode Active</h2>
+          <p>The UI is currently disabled in this deployment. Please use the API endpoints to interact with the service.</p>
+          
+          <h3>Available Endpoints:</h3>
+          <ul>
+              <li><code>/api/generate</code> - Generate transformation proposals and LLM content</li>
+              <li><code>/api/analysis/:companyId/generate</code> - Company-specific LLM content generation</li>
+          </ul>
+          
+          <p>For more information, please refer to the API documentation or contact the administrator.</p>
+      </div>
+  </body>
+  </html>`;
+  
+  res.set('Content-Type', 'text/html');
+  return res.send(embeddedHtml);
 });
 
-// Then serve static files in this specific order
-app.use(express.static(uiPublicPath)); // Placeholder UI takes precedence
+// Then serve static files if possible
+if (fs.existsSync(uiPublicPath)) {
+  app.use(express.static(uiPublicPath));
+  console.log(`Serving static files from: ${uiPublicPath}`);
+}
+
+// Serve other static content
 app.use('/test-results', express.static(path.join(__dirname, '../test-results')));
 app.use('/cache', express.static(path.join(projectRoot, 'cache')));
 
@@ -72,9 +155,9 @@ if (fs.existsSync(dashboardPath)) {
   console.log(`Dashboard path: ${dashboardPath} (exists: false)`);
 }
 
-// API fallback handler for root (will only be reached if index.html doesn't exist)
+// API fallback handler for root (will only be reached if index.html doesn't exist and our embedded HTML failed)
 app.get('/', (req, res) => {
-  console.log('No index.html found, returning API message');
+  console.log('All attempts to serve HTML failed, returning API message');
   res.json({ message: 'AI Transformation Plan Generator API is running' });
 });
 
