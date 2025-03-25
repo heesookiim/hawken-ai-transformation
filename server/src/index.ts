@@ -30,6 +30,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
+// Use PORT env var from Heroku
 const port = process.env.PORT || 3001;
 
 app.use(cors());
@@ -47,6 +48,7 @@ const possibleUIPaths = [
   path.join(projectRoot, '../ui/public'),    // Another possible structure
   path.join(projectRoot, 'ui', 'public'),    // Alternative notation
   path.join(projectRoot, '..', 'ui', 'public'), // Yet another structure
+  path.join(projectRoot, '..', '..', 'ui', 'public'), // Additional possibility for Heroku
 ];
 
 // Find the first existing UI path
@@ -146,11 +148,11 @@ if (fs.existsSync(uiPublicPath)) {
 app.use('/test-results', express.static(path.join(__dirname, '../test-results')));
 app.use('/cache', express.static(path.join(projectRoot, 'cache')));
 
-// The dashboard path (if used in deployed environment)
-const dashboardPath = '/Users/heesookim/playground/AI_Transformation_Plan_Generator_shadcn/ui/public';
+// The dashboard path - REMOVE HARDCODED PATH, use relative paths only
+const dashboardPath = path.join(projectRoot, 'ui/public');
 if (fs.existsSync(dashboardPath)) {
   app.use('/dashboard', express.static(dashboardPath));
-  console.log(`Dashboard path: ${dashboardPath} (exists: true)`);
+  console.log(`Dashboard path: ${dashboardPath} (exists: ${fs.existsSync(dashboardPath)})`);
 } else {
   console.log(`Dashboard path: ${dashboardPath} (exists: false)`);
 }
@@ -752,24 +754,47 @@ app.get('/api/*', (req, res, next) => {
 
 // Setup for serving Next.js static files
 const isProduction = process.env.NODE_ENV === 'production';
-const UI_BUILD_PATH = isProduction 
-  ? path.join(process.cwd(), '../ui/.next')
-  : path.join(__dirname, '../../ui/.next');
-const UI_PUBLIC_PATH = isProduction
-  ? path.join(process.cwd(), '../ui/public')
-  : path.join(__dirname, '../../ui/public');
+// Fix paths for production environment on Heroku
+const UI_BUILD_PATH = path.join(projectRoot, isProduction ? 'ui/.next' : '../ui/.next');
+const UI_PUBLIC_PATH = path.join(projectRoot, isProduction ? 'ui/public' : '../ui/public');
 
 // Check if Next.js build exists and log status
-if (isProduction) {
-  if (fs.existsSync(UI_BUILD_PATH)) {
-    console.log('Found Next.js build at:', UI_BUILD_PATH);
-  } else {
-    console.warn('Next.js build not found at:', UI_BUILD_PATH);
+if (fs.existsSync(UI_BUILD_PATH)) {
+  console.log('Found Next.js build at:', UI_BUILD_PATH);
+} else {
+  console.warn('Next.js build not found at:', UI_BUILD_PATH);
+  // Try alternative paths
+  const altPath = path.join(projectRoot, 'ui', '.next');
+  if (fs.existsSync(altPath)) {
+    console.log('Found Next.js build at alternative path:', altPath);
   }
 }
 
 // Serve Next.js static files
-app.use('/_next', express.static(path.join(UI_BUILD_PATH, '_next')));
+// Try multiple possible _next paths to handle different Next.js output structures
+const possibleNextPaths = [
+  path.join(UI_BUILD_PATH, '_next'),
+  path.join(UI_BUILD_PATH, 'standalone', '_next'),
+  path.join(UI_BUILD_PATH, 'standalone', '.next', '_next'),
+  path.join(projectRoot, 'ui', '.next', '_next')
+];
+
+// Find first existing _next path and serve it
+let foundNextPath = false;
+for (const nextPath of possibleNextPaths) {
+  if (fs.existsSync(nextPath)) {
+    app.use('/_next', express.static(nextPath));
+    console.log(`Serving Next.js static files from: ${nextPath}`);
+    foundNextPath = true;
+    break;
+  }
+}
+
+if (!foundNextPath) {
+  console.warn('Could not find Next.js static files directory (_next)');
+}
+
+// Serve static files from ui/public
 app.use('/static', express.static(UI_PUBLIC_PATH));
 
 // Catch-all handler for non-API routes to serve the Next.js app
@@ -780,15 +805,95 @@ app.get('*', (req, res, next) => {
   }
   
   try {
-    // Try to send the Next.js HTML file
-    const nextHtmlPath = path.join(UI_BUILD_PATH, 'server/pages', req.path, '.html');
+    // Check different possible Next.js HTML file locations (standalone output structure is different)
+    const possibleHtmlPaths = [
+      // Standard Next.js path format
+      path.join(UI_BUILD_PATH, 'server/pages', req.path, '.html'),
+      // Standalone export format with index path
+      path.join(UI_BUILD_PATH, 'standalone', 'server/pages', req.path, 'index.html'),
+      // Standalone server pages direct
+      path.join(UI_BUILD_PATH, 'standalone', 'server/pages', `${req.path}.html`),
+      // Direct path without server/pages
+      path.join(UI_BUILD_PATH, `${req.path}.html`),
+      // Try direct path with index.html
+      path.join(UI_BUILD_PATH, req.path, 'index.html')
+    ];
     
-    if (fs.existsSync(nextHtmlPath)) {
-      return res.sendFile(nextHtmlPath);
+    // Try each possible path
+    for (const htmlPath of possibleHtmlPaths) {
+      if (fs.existsSync(htmlPath)) {
+        console.log(`Found HTML file at: ${htmlPath}`);
+        return res.sendFile(htmlPath);
+      }
     }
     
-    // Fallback to index.html for client-side routing
-    return res.sendFile(path.join(UI_BUILD_PATH, 'server/pages/index.html'));
+    // If we couldn't find a specific page, try different index.html locations
+    const possibleIndexPaths = [
+      path.join(UI_BUILD_PATH, 'server/pages/index.html'),
+      path.join(UI_BUILD_PATH, 'standalone/server/pages/index.html'),
+      path.join(UI_BUILD_PATH, 'index.html'),
+      path.join(UI_PUBLIC_PATH, 'index.html')
+    ];
+    
+    for (const indexPath of possibleIndexPaths) {
+      if (fs.existsSync(indexPath)) {
+        console.log(`Serving index from: ${indexPath}`);
+        return res.sendFile(indexPath);
+      }
+    }
+    
+    // Last resort - serve the embedded HTML
+    console.log('No Next.js files found, serving embedded HTML');
+    const embeddedHtml = `<!DOCTYPE html>
+    <html>
+    <head>
+        <title>AI Transformation Plan Generator</title>
+        <style>
+            body {
+                font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                max-width: 800px;
+                margin: 0 auto;
+                padding: 2rem;
+                line-height: 1.6;
+                color: #333;
+            }
+            .container {
+                background-color: #f9f9f9;
+                border-radius: 8px;
+                padding: 2rem;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            }
+            h1 {
+                color: #2563eb;
+                margin-top: 0;
+            }
+            code {
+                background-color: #f0f0f0;
+                padding: 0.2rem 0.4rem;
+                border-radius: 4px;
+                font-family: monospace;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>AI Transformation Plan Generator</h1>
+            <h2>Server is Running</h2>
+            <p>The UI files could not be found. Make sure Next.js build is properly configured.</p>
+            <p>Current path: ${UI_BUILD_PATH}</p>
+            <p>Environment: ${process.env.NODE_ENV}</p>
+            
+            <h3>Available Endpoints:</h3>
+            <ul>
+                <li><code>/api/generate</code> - Generate transformation proposals and LLM content</li>
+                <li><code>/api/analysis/:companyId/generate</code> - Company-specific LLM content generation</li>
+            </ul>
+        </div>
+    </body>
+    </html>`;
+    
+    res.set('Content-Type', 'text/html');
+    return res.send(embeddedHtml);
   } catch (error) {
     console.error('Error serving Next.js file:', error);
     return res.status(500).json({ error: 'Internal server error' });
@@ -798,6 +903,7 @@ app.get('*', (req, res, next) => {
 // Near the end of the file, comment out the UI configuration
 // configureUIServing(app);
 
+// Start the server on the dynamic port assigned by Heroku
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
   console.log('Google AI API Key available:', !!process.env.GOOGLE_AI_API_KEY);

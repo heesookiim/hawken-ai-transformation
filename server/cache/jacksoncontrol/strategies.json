@@ -1,38 +1,38 @@
 [
   {
-    "id": "JC_AI_1",
-    "title": "AI-Powered Energy Consumption Analysis and Recommendation Engine",
-    "description": "Leverage LLMs to analyze building data (energy consumption, occupancy, environmental conditions) and generate personalized recommendations for energy optimization. The LLM will ingest data from various building systems, identify patterns of energy waste, and generate reports with specific, actionable recommendations for clients. This includes suggesting adjustments to HVAC schedules, lighting controls, and equipment upgrades. The LLM will also be trained on a knowledge base of energy efficiency best practices and regulatory requirements to ensure recommendations are compliant and effective. The LLM adds unique value by identifying subtle patterns and generating human-readable reports that are tailored to the specific needs of each client, going beyond simple data aggregation and visualization. This addresses challenge #1 and aligns with industry insight #1.",
+    "id": "energy_optimization_llm",
+    "title": "LLM-Powered Energy Consumption Anomaly Detection and Recommendation System",
+    "description": "This strategy leverages LLMs to analyze building energy consumption data (e.g., from BMS logs, utility bills) and identify anomalies indicative of inefficiencies. The LLM is trained on a knowledge base of energy efficiency best practices, building system operation manuals, and past energy audit reports. It then generates textual reports highlighting anomalies, explaining their potential causes, and recommending specific actions to optimize energy consumption. The LLM adds unique value by providing human-readable explanations and actionable recommendations, going beyond simple anomaly detection. It can also analyze textual descriptions of building characteristics and operational patterns to tailor recommendations. This addresses challenge #1 and leverages industry insight #1.",
     "impact": "High",
     "complexity": "Medium",
     "timeframe": "Medium-term",
     "category": "text analysis"
   },
   {
-    "id": "JC_AI_2",
-    "title": "LLM-Driven Predictive Maintenance Report Generator",
-    "description": "Develop an LLM-based system that analyzes equipment data (sensor readings, maintenance logs, operational parameters) to predict potential equipment failures and generate proactive maintenance schedules. The LLM will be trained on historical data and failure patterns to identify anomalies and predict when maintenance is required. The system will generate detailed reports outlining the predicted failure, the recommended maintenance actions, and the potential cost savings from preventing the failure. The LLM adds unique value by providing context and justification for maintenance recommendations, improving client trust and reducing the risk of unexpected downtime. This addresses challenge #2 and aligns with industry insight #4.",
+    "id": "predictive_maintenance_llm",
+    "title": "LLM-Driven Predictive Maintenance Report Generation and Scheduling",
+    "description": "This strategy uses LLMs to analyze maintenance logs, equipment sensor data, and manufacturer documentation to predict potential equipment failures. The LLM is trained to identify patterns and correlations between equipment performance, environmental factors, and maintenance history. It generates textual reports summarizing the predicted failure risks, recommended maintenance actions, and optimal maintenance schedules. The LLM can also analyze textual descriptions of past failures to identify recurring issues and suggest preventative measures. This addresses challenge #2 and leverages industry insights #4 and #5. The LLM's ability to understand and synthesize information from diverse sources (sensor data, maintenance logs, manuals) is key.",
     "impact": "High",
     "complexity": "Medium",
     "timeframe": "Medium-term",
     "category": "text analysis"
   },
   {
-    "id": "JC_AI_3",
-    "title": "AI-Powered Personalized Recommendation and Upselling System",
-    "description": "Create an LLM-based system that analyzes client building profiles, usage patterns, and industry trends to generate personalized recommendations for upgrades, new technologies, and service contracts. The LLM will ingest data from various sources, including building management systems, client contracts, and market research reports. It will then generate tailored proposals outlining the benefits of each recommendation, the potential ROI, and the implementation steps. The LLM adds unique value by understanding the specific needs and priorities of each client and generating compelling, persuasive proposals that are more likely to result in a sale. This addresses challenge #3 and aligns with industry insight #5.",
+    "id": "security_threat_analysis_llm",
+    "title": "LLM-Based Security Incident Summarization and Response Recommendation",
+    "description": "This strategy uses LLMs to analyze security logs, video surveillance transcripts (using image-to-text capabilities of LLMs like GPT-4 Vision), and access control data to identify and respond to security threats. The LLM summarizes security incidents in natural language, identifies potential risks, and recommends appropriate response actions. For example, if the LLM detects unusual access patterns combined with suspicious video footage, it can generate a report recommending further investigation. This addresses challenge #4 and leverages industry insight #7. The LLM's ability to understand the context of security events and generate actionable recommendations is crucial.",
+    "impact": "High",
+    "complexity": "Medium",
+    "timeframe": "Medium-term",
+    "category": "visual understanding"
+  },
+  {
+    "id": "esg_report_automation_llm",
+    "title": "Automated ESG Report Generation with LLM-Powered Data Synthesis",
+    "description": "This strategy leverages LLMs to automate the generation of ESG reports by synthesizing data from various sources, including energy consumption data, water usage data, waste management data, and tenant surveys. The LLM analyzes these data sources, identifies key sustainability metrics, and generates textual reports summarizing the building's ESG performance. The LLM can also incorporate qualitative information, such as descriptions of sustainability initiatives, to provide a comprehensive overview of the building's ESG efforts. This addresses challenge #6 and leverages industry insight #1. The LLM's ability to understand and synthesize information from diverse sources is key to creating comprehensive and informative ESG reports.",
     "impact": "Medium",
     "complexity": "Medium",
     "timeframe": "Medium-term",
     "category": "content generation"
-  },
-  {
-    "id": "JC_AI_4",
-    "title": "Image-Based Document Understanding for Building System Integration",
-    "description": "Develop an LLM-powered system that can analyze images of building system documentation (schematics, wiring diagrams, equipment manuals) to automatically extract key information and facilitate integration with Jackson Control's platform. The LLM, leveraging its visual understanding capabilities (e.g., GPT-4 Vision), will process images of documents, identify components, connections, and specifications, and generate structured data that can be used to configure and manage building systems. This reduces the manual effort required to integrate data from diverse vendors and building systems. The LLM adds unique value by automating the extraction of information from unstructured documents, enabling faster and more accurate system integration. This addresses challenge #6 and aligns with industry insight #3.",
-    "impact": "Medium",
-    "complexity": "Medium",
-    "timeframe": "Medium-term",
-    "category": "visual understanding"
   }
 ]
