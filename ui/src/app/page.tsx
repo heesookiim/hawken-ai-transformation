@@ -128,7 +128,12 @@ export default function Home() {
               />
               
               {error && <div className="text-red-500 text-sm">{error}</div>}
-              <Button type="submit" className="w-full" disabled={isLoading}>
+              <Button 
+                type="submit" 
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2" 
+                disabled={isLoading}
+                style={{ display: 'block' }}
+              >
                 {isLoading ? 'Loading...' : 'Generate Analysis'}
               </Button>
             </form>

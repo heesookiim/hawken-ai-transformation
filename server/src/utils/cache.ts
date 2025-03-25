@@ -1,6 +1,9 @@
 import path from 'path';
 import fs from 'fs';
 
+// Log when this module is loaded to help with debugging
+console.log('Cache module loaded');
+
 /**
  * Get a normalized company ID from company name
  */
