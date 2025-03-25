@@ -1,5 +1,5 @@
 import dotenv from 'dotenv';
-import { ScrapedData, scrapeCompanyWebsite } from '../scraper.js';
+import { ScrapedData, scrapeCompanyWebsite } from '../scraper/index.js';
 import { analyzeContext } from '../ai/engines/context.js';
 import { generateBusinessChallenges } from '../ai/engines/businessChallenges.js';
 import { getIndustryInsights } from '../ai/engines/industry.js';
