@@ -16,7 +16,7 @@
     "build": "npm run build-ui && npm run build-server",
     "build-server": "cd server && npm run build",
     "build-ui": "cd ui && npm run build",
-    "heroku-postbuild": "echo 'Installing dependencies...' && npm run install-server && npm run install-ui && echo 'Creating necessary directories...' && mkdir -p server/dist ui/.next/standalone ui/.next/static && echo 'Building UI with standalone output...' && cd ui && npm run build && echo 'Building server...' && cd .. && npm run build-server",
+    "heroku-postbuild": "echo 'Installing dependencies...' && npm run install-server && echo 'Creating necessary directories...' && mkdir -p server/dist ui/public && echo 'Creating placeholder UI...' && echo '<html><head><title>AI Transformation Plan Generator</title></head><body><h1>API Mode Active</h1><p>The UI is currently disabled. Please use API endpoints.</p></body></html>' > ui/public/index.html && echo 'Building server...' && npm run build-server",
     "clean": "rimraf server/dist ui/.next",
     "test-integrated": "npm run build && npm start"
   },

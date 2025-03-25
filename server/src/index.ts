@@ -9,7 +9,6 @@ import { calculateOpportunityScore, calculateCombinedScore } from './utils/scori
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { getCompanyId } from './utils/cache.js';
 import { loadLLMContent, generateLLMContent } from './ai/llmContent.js';
-import { configureUIServing } from './ui-integration.js';
 
 // API Endpoints Summary:
 // - /api/generate: Unified endpoint for both proposal generation and LLM content generation
@@ -632,6 +631,19 @@ app.get('/api/llm-content/:company', async (req, res) => {
   }
 });
 
+// Add this route handler for serving the placeholder UI
+app.use(express.static(path.join(process.cwd(), 'ui/public')));
+
+// Root route handler - redirect to index.html
+app.get('/', (req, res) => {
+  res.sendFile(path.join(process.cwd(), 'ui/public/index.html'));
+});
+
+// Debug catch-all handler for API routes
+app.get('/api/*', (req, res, next) => {
+  return next();
+});
+
 // After all API routes but before app.listen()
 
 // Setup for serving Next.js static files
@@ -695,8 +707,8 @@ app.get('*', (req, res, next) => {
   }
 });
 
-// Configure UI serving with robust path detection
-configureUIServing(app);
+// Near the end of the file, comment out the UI configuration
+// configureUIServing(app);
 
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
