@@ -15,7 +15,7 @@
     "install-ui": "cd ui && npm install",
     "build": "npm run build-server && npm run build-ui",
     "build-server": "cd server && npm run build",
-    "build-ui": "cd ui && npm run build"
+    "build-ui": "cd ui && npx next build"
   },
   "devDependencies": {
     "@eslint/js": "^9.22.0",
