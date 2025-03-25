@@ -40,14 +40,26 @@ const projectRoot = process.cwd();
 console.log(`Running in ${process.env.NODE_ENV === 'production' ? 'production' : 'development'} environment`);
 console.log(`Project root: ${projectRoot}`);
 
-// Serve static files with proper paths
+// Define UI paths and check if files exist
 const uiPublicPath = path.join(projectRoot, 'ui/public');
+const indexHtmlPath = path.join(uiPublicPath, 'index.html');
+const indexHtmlExists = fs.existsSync(indexHtmlPath);
+
 console.log(`UI public path: ${uiPublicPath} (exists: ${fs.existsSync(uiPublicPath)})`);
+console.log(`index.html path: ${indexHtmlPath} (exists: ${indexHtmlExists})`);
 
-// Serve placeholder UI as top priority
-app.use(express.static(uiPublicPath));
+// First, serve the static index.html file directly from the root path
+app.get('/', (req, res, next) => {
+  if (indexHtmlExists) {
+    console.log('Serving index.html from the root path');
+    return res.sendFile(indexHtmlPath);
+  }
+  // If no index.html, pass to next middleware
+  next();
+});
 
-// Serve other static content
+// Then serve static files in this specific order
+app.use(express.static(uiPublicPath)); // Placeholder UI takes precedence
 app.use('/test-results', express.static(path.join(__dirname, '../test-results')));
 app.use('/cache', express.static(path.join(projectRoot, 'cache')));
 
@@ -60,16 +72,9 @@ if (fs.existsSync(dashboardPath)) {
   console.log(`Dashboard path: ${dashboardPath} (exists: false)`);
 }
 
-// Root route handler - serves index.html if it exists, otherwise returns API message
+// API fallback handler for root (will only be reached if index.html doesn't exist)
 app.get('/', (req, res) => {
-  const indexPath = path.join(uiPublicPath, 'index.html');
-  console.log(`Checking for index.html at: ${indexPath} (exists: ${fs.existsSync(indexPath)})`);
-  
-  if (fs.existsSync(indexPath)) {
-    return res.sendFile(indexPath);
-  }
-  
-  // Fallback to API message
+  console.log('No index.html found, returning API message');
   res.json({ message: 'AI Transformation Plan Generator API is running' });
 });
 
