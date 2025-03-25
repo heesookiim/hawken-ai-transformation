@@ -43,8 +43,8 @@ app.use('/test-results', express.static(path.join(__dirname, '../test-results'))
 // Serve static files from cache directory
 app.use('/cache', express.static(path.join(process.cwd(), 'cache')));
 
-// Serve static files from the public directory
-app.use('/dashboard', express.static('/Users/heesookim/playground/AI_Transformation_Plan_Generator_shadcn/ui/public'));
+// Remove hardcoded path to UI public directory
+// app.use('/dashboard', express.static('/Users/heesookim/playground/AI_Transformation_Plan_Generator_shadcn/ui/public'));
 
 // Add error handling for static file serving
 app.use('/cache', (err: any, req: any, res: any, next: any) => {
