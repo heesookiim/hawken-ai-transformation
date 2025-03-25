@@ -29,12 +29,9 @@ const nextConfig = {
   // Output as standalone to optimize for deployment
   output: 'standalone',
   
-  // Make sure we're building with the correct output structure for standalone mode
-  experimental: {
-    // These are already enabled in Next.js 15+, but explicitly setting them to be sure
-    serverComponentsExternalPackages: [],
-    outputFileTracingRoot: process.cwd(),
-  },
+  // Configuration for server components (moved from experimental to root config)
+  serverExternalPackages: [],
+  outputFileTracingRoot: process.cwd(),
   
   // Properly configure images for deployment
   images: {
