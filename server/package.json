@@ -7,8 +7,7 @@
   "scripts": {
     "start": "node dist/index.js",
     "dev": "tsx watch src/index.ts",
-    "build": "tsc && node dist/index.js --setup-only || node ensure-cache-dir.js",
-    "postbuild": "echo 'Ensuring cache directory exists...' && node ensure-cache-dir.js",
+    "build": "tsc",
     "test": "jest",
     "test:analyzer": "tsx src/test-analysis.ts",
     "test:components": "tsx src/utils/component-tester.ts",

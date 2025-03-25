@@ -1,8 +1,3 @@
-// This file is temporarily renamed to eslint.config.mjs.bak to avoid conflicts
-// with .eslintrc.js configuration.
-// If you want to use flat config in the future, rename this file back to eslint.config.mjs
-// and remove .eslintrc.js
-
 import { dirname } from "path";
 import { fileURLToPath } from "url";
 import { FlatCompat } from "@eslint/eslintrc";
@@ -18,4 +13,4 @@ const eslintConfig = [
   ...compat.extends("next/core-web-vitals", "next/typescript"),
 ];
 
-export default eslintConfig; 
+export default eslintConfig;
