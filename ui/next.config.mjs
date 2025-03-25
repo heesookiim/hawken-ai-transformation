@@ -49,6 +49,20 @@ const nextConfig = {
     
     return config;
   },
+
+  // Add these options for Heroku
+  experimental: {
+    // Enable output file tracing to reduce build size and improve performance
+    outputFileTracingRoot: process.cwd(),
+    // Optimize Heroku builds
+    optimizePackageImports: ['@radix-ui', 'lucide-react'],
+  },
+  
+  // Optimize caching
+  generateBuildId: async () => {
+    // You can use a custom build ID like git commit hash if available
+    return process.env.SOURCE_VERSION || String(new Date().getTime());
+  },
 };
 
 export default nextConfig; 
