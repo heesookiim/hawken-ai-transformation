@@ -1,0 +1,13 @@
+{
+  "version": 2,
+  "builds": [
+    { "src": "package.json", "use": "@vercel/next" }
+  ],
+  "env": {
+    "NEXT_PUBLIC_HEROKU_API_URL": "https://hawken-ai-transformation-27d8ee0ab1a5.herokuapp.com"
+  },
+  "buildCommand": "next build",
+  "devCommand": "next dev",
+  "installCommand": "npm install",
+  "framework": "nextjs"
+} 

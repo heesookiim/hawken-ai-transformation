@@ -32,7 +32,25 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const port = process.env.PORT || 3001;
 
-app.use(cors());
+// Updated CORS configuration to allow requests from Vercel deployment
+const VERCEL_URL = process.env.VERCEL_URL || 'https://hawken-ai-transformation-vnaj.vercel.app';
+app.use(cors({
+  origin: [
+    VERCEL_URL,
+    // Allow common development origins
+    'http://localhost:3000',
+    'http://localhost:3001',
+    // Add the specific Vercel deployment URL
+    'https://hawken-ai-transformation-vnaj.vercel.app',
+    // You might need to add both https and http versions
+    VERCEL_URL.replace('https://', 'http://'),
+    // Add any other production domains
+    '*.vercel.app'
+  ],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
 app.use(express.json());
 
 // Determine proper paths based on environment

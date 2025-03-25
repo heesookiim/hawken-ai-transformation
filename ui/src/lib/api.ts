@@ -4,11 +4,19 @@ import { CompanyData, IndustryInsights } from '@/types/api';
 
 // Dynamic API URL that works in both environments
 const getApiBaseUrl = () => {
-  // Check if we're in the browser
+  // In browser context
   if (typeof window !== 'undefined') {
-    // In production, use the same domain (empty base path)
+    // For production deployment on Vercel, use the configured Heroku URL
     if (process.env.NODE_ENV === 'production') {
-      return '';
+      const herokuUrl = process.env.NEXT_PUBLIC_HEROKU_API_URL;
+      
+      // Make sure the URL is valid
+      if (herokuUrl && (herokuUrl.startsWith('http://') || herokuUrl.startsWith('https://'))) {
+        return herokuUrl;
+      } else {
+        console.warn('Invalid Heroku URL format - should be https://your-app.herokuapp.com');
+        return 'https://hawken-ai-transformation-27d8ee0ab1a5.herokuapp.com';
+      }
     }
   }
   
@@ -17,6 +25,13 @@ const getApiBaseUrl = () => {
 };
 
 const API_URL = getApiBaseUrl();
+
+// For debugging
+if (typeof window !== 'undefined') {
+  console.log(`API calls will be made to: ${API_URL}`);
+  console.log(`Environment: ${process.env.NODE_ENV}`);
+  console.log(`Available env vars: NEXT_PUBLIC_API_URL=${process.env.NEXT_PUBLIC_API_URL}, NEXT_PUBLIC_HEROKU_API_URL=${process.env.NEXT_PUBLIC_HEROKU_API_URL}`);
+}
 
 export type { CompanyData, IndustryInsights };
 
