@@ -49,4 +49,4 @@ Thumbs.db
 
 # Test output
 /cache/
-/test-results/ 
+/test-results/ node_modules
