@@ -42,8 +42,8 @@ app.use('/test-results', express.static(path.join(__dirname, '../test-results'))
 // Serve static files from cache directory
 app.use('/cache', express.static(path.join(process.cwd(), 'cache')));
 
-// Remove the hardcoded path that won't exist on Heroku
-// app.use('/dashboard', express.static('/Users/heesookim/playground/AI_Transformation_Plan_Generator_shadcn/ui/public'));
+// Serve static files from the public directory
+app.use('/dashboard', express.static('/Users/heesookim/playground/AI_Transformation_Plan_Generator_shadcn/ui/public'));
 
 // Add error handling for static file serving
 app.use('/cache', (err: any, req: any, res: any, next: any) => {
@@ -55,8 +55,8 @@ app.use('/cache', (err: any, req: any, res: any, next: any) => {
   }
 });
 
-// Root API endpoint (accessible at /api)
-app.get('/api', (req, res) => {
+// Add a root route handler
+app.get('/', (req, res) => {
   res.json({ message: 'AI Transformation Plan Generator API is running' });
 });
 
@@ -632,6 +632,30 @@ app.get('/api/llm-content/:company', async (req, res) => {
   }
 });
 
+// After all API routes but before app.listen()
+
+// Setup for serving Next.js static files
+const isProduction = process.env.NODE_ENV === 'production';
+const UI_BUILD_PATH = isProduction 
+  ? path.join(process.cwd(), '../ui/.next')
+  : path.join(__dirname, '../../ui/.next');
+const UI_PUBLIC_PATH = isProduction
+  ? path.join(process.cwd(), '../ui/public')
+  : path.join(__dirname, '../../ui/public');
+
+// Check if Next.js build exists and log status
+if (isProduction) {
+  if (fs.existsSync(UI_BUILD_PATH)) {
+    console.log('Found Next.js build at:', UI_BUILD_PATH);
+  } else {
+    console.warn('Next.js build not found at:', UI_BUILD_PATH);
+  }
+}
+
+// Serve Next.js static files
+app.use('/_next', express.static(path.join(UI_BUILD_PATH, '_next')));
+app.use('/static', express.static(UI_PUBLIC_PATH));
+
 // Root handler for the UI - should come after all API routes
 app.get('/', (req, res) => {
   res.send(`
@@ -648,39 +672,31 @@ app.get('/', (req, res) => {
   `);
 });
 
-// Configure UI serving with robust path detection
-// Move this before the catch-all handler to ensure it takes precedence
-configureUIServing(app);
-
-// Debug catch-all handler to show where request is going
+// Catch-all handler for non-API routes to serve the Next.js app
 app.get('*', (req, res, next) => {
-  // Skip API routes, existing routes, and dashboard routes (handled by UI integration)
-  if (req.path.startsWith('/api') || 
-      req.path.startsWith('/cache') || 
-      req.path.startsWith('/test-results') ||
-      req.path.startsWith('/dashboard') ||
-      req.path === '/' ||
-      req.path.startsWith('/_next') ||
-      req.path.startsWith('/public')) {
+  // Skip API routes and existing routes
+  if (req.path.startsWith('/api') || req.path.startsWith('/cache') || req.path.startsWith('/test-results')) {
     return next();
   }
   
-  // Return helpful debugging info for any non-API routes
-  return res.json({
-    message: 'Route not found',
-    requestedPath: req.path,
-    availableRoutes: [
-      '/api/generate',
-      '/api/analysis/:companyId/generate', 
-      '/api/analyze',
-      '/api/cache-status/:company',
-      '/api/analysis/:company',
-      '/api/cache/:company/:file',
-      '/api/llm-content/:company',
-      '/dashboard - UI interface'
-    ]
-  });
+  try {
+    // Try to send the Next.js HTML file
+    const nextHtmlPath = path.join(UI_BUILD_PATH, 'server/pages', req.path, '.html');
+    
+    if (fs.existsSync(nextHtmlPath)) {
+      return res.sendFile(nextHtmlPath);
+    }
+    
+    // Fallback to index.html for client-side routing
+    return res.sendFile(path.join(UI_BUILD_PATH, 'server/pages/index.html'));
+  } catch (error) {
+    console.error('Error serving Next.js file:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
 });
+
+// Configure UI serving with robust path detection
+configureUIServing(app);
 
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
