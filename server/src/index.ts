@@ -9,7 +9,8 @@ import { calculateOpportunityScore, calculateCombinedScore } from './utils/scori
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { getCompanyId } from './utils/cache.js';
 import { loadLLMContent, generateLLMContent } from './ai/llmContent.js';
-import { configureUIServing } from './ui-integration.js';
+// Temporarily comment out UI integration
+// import { configureUIServing } from './ui-integration.js';
 
 // API Endpoints Summary:
 // - /api/generate: Unified endpoint for both proposal generation and LLM content generation
@@ -57,7 +58,12 @@ app.use('/cache', (err: any, req: any, res: any, next: any) => {
 
 // Add a root route handler
 app.get('/', (req, res) => {
-  res.json({ message: 'AI Transformation Plan Generator API is running' });
+  res.json({ 
+    message: 'AI Transformation Plan Generator API is running',
+    redirectTo: '/api',
+    appStatus: 'API Only Mode - UI temporarily disabled',
+    uiInfo: 'Frontend UI is currently in maintenance mode. Please use API endpoints directly.'
+  });
 });
 
 // Helper function to get path to cache directory
@@ -632,10 +638,32 @@ app.get('/api/llm-content/:company', async (req, res) => {
   }
 });
 
-// After all API routes but before app.listen()
+// Debug catch-all handler to show where request is going
+app.get('*', (req, res, next) => {
+  // Skip API routes and existing routes
+  if (req.path.startsWith('/api') || req.path.startsWith('/cache') || req.path.startsWith('/test-results')) {
+    return next();
+  }
+  
+  // Return helpful debugging info for any non-API routes
+  return res.json({
+    message: 'Route not found',
+    requestedPath: req.path,
+    availableRoutes: [
+      '/api/generate',
+      '/api/analysis/:companyId/generate', 
+      '/api/analyze',
+      '/api/cache-status/:company',
+      '/api/analysis/:company',
+      '/api/cache/:company/:file',
+      '/api/llm-content/:company'
+    ]
+  });
+});
 
+// Near the end of the file, comment out the UI configuration:
 // Configure UI serving with robust path detection
-configureUIServing(app);
+// configureUIServing(app);
 
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
