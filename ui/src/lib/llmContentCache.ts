@@ -1,5 +1,4 @@
-import { CompanyData } from '@/types/api';
-import { BusinessChallenge } from '@/lib/api';
+import { CompanyData, BusinessChallenge } from '@/types/api';
 
 interface ExecutiveSummaryContent {
   problemStatement: string;

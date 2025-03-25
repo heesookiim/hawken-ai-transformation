@@ -20,6 +20,14 @@ export interface CompanyData {
 // Import the relevance types for consistency
 import { PainPointRelevance, BusinessChallengeRelevance } from './aiOpportunity';
 
+// Add the BusinessChallenge interface that was missing
+export interface BusinessChallenge {
+  name?: string;
+  description?: string;
+  category?: string;
+  priority?: number;
+}
+
 export interface AIOpportunity {
   id: string;
   title: string;
