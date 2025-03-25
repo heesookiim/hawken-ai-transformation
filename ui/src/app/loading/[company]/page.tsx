@@ -46,20 +46,8 @@ export default function AnalysisLoadingPage() {
       <div className="w-full max-w-md mb-8">
         <Progress 
           value={progress} 
-          className="h-4 mb-2 border border-gray-300 rounded-full overflow-hidden"
-          style={{ 
-            backgroundColor: '#f3f4f6',
-            display: 'block' 
-          }}
+          className="h-3 mb-2 border border-border rounded-full" 
         />
-        <div 
-          className="h-4 bg-blue-600 rounded-full transition-all" 
-          style={{ 
-            width: `${progress}%`, 
-            position: 'relative',
-            top: '-1.5rem'
-          }}
-        ></div>
         <p className="text-center text-muted-foreground">{status}</p>
       </div>
 

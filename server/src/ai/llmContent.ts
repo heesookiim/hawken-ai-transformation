@@ -2,36 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import dotenv from 'dotenv';
-
-// Define cache utility functions that will be replaced by the imported ones if available
-let getCompanyId = (companyName) => companyName.toLowerCase().replace(/\s+/g, '-');
-let getCachePath = (companyId, step) => {
-  const cachePath = path.join(process.cwd(), 'cache', companyId);
-  if (!fs.existsSync(cachePath)) {
-    fs.mkdirSync(cachePath, { recursive: true });
-  }
-  return path.join(cachePath, `${step}.json`);
-};
-
-// Try to import the cache module, but provide fallbacks if it fails
-try {
-  const cacheModule = await import('../utils/cache.js').catch(e => {
-    console.warn('Cache module import failed:', e.message);
-    console.log('Using fallback cache implementation');
-    return { 
-      getCompanyId, 
-      getCachePath 
-    };
-  });
-  
-  if (cacheModule) {
-    getCompanyId = cacheModule.getCompanyId;
-    getCachePath = cacheModule.getCachePath;
-    console.log('Successfully loaded cache module');
-  }
-} catch (error) {
-  console.warn('Error importing cache module, using fallback:', error.message);
-}
+import { getCompanyId, getCachePath } from '../utils/cache.js';
 
 // Load environment variables
 dotenv.config();
