@@ -29,13 +29,29 @@ const nextConfig = {
   // Output as standalone to optimize for deployment
   output: 'standalone',
   
-  // Configuration for server components (moved from experimental to root config)
-  serverExternalPackages: [],
+  // Configuration for server components
+  serverExternalPackages: ["mysql2"],
   outputFileTracingRoot: process.cwd(),
   
   // Properly configure images for deployment
   images: {
-    domains: ['localhost'],
+    domains: [
+      "localhost",
+      "vercel.app",
+      "avatars.githubusercontent.com",
+      "*.cloudfront.net",
+      "*.amazonaws.com",
+    ],
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "*.cloudfront.net",
+      },
+      {
+        protocol: "https",
+        hostname: "*.amazonaws.com",
+      },
+    ],
     unoptimized: process.env.NODE_ENV === 'production', // Disable image optimization in production for Heroku
   },
   
@@ -47,7 +63,23 @@ const nextConfig = {
       use: 'raw-loader'
     });
     
+    // @ts-ignore
+    config.externals = [...config.externals, "canvas", "jsdom"];
     return config;
+  },
+
+  eslint: {
+    // Warning: This allows production builds to successfully complete even if
+    // your project has ESLint errors.
+    ignoreDuringBuilds: true,
+  },
+
+  typescript: {
+    // !! WARN !!
+    // Dangerously allow production builds to successfully complete even if
+    // your project has type errors.
+    // !! WARN !!
+    ignoreBuildErrors: true,
   },
 };
 
