@@ -750,7 +750,13 @@ const possibleNextPaths = [
   path.join(STANDALONE_PATH, '_next'),
   path.join(projectRoot, `${uiDirRelativeToRoot}`, '.next', '_next'),
   path.join(projectRoot, `${uiDirRelativeToRoot}`, '_next'),
-  path.join(projectRoot, '..', 'ui', '.next', '_next') // Try going up one directory
+  path.join(projectRoot, '..', 'ui', '.next', '_next'), // Try going up one directory
+  // Additional paths to check
+  path.join(projectRoot, '..', 'ui', '_next'),  // Direct in ui folder
+  path.join(projectRoot, '../..', 'ui', '_next'), // Try two levels up
+  path.join(projectRoot, '../..', 'ui', '.next', '_next'), // Two levels up with .next
+  path.join(projectRoot, `${uiDirRelativeToRoot}`, '.next/static'), // Use .next/static
+  path.join(projectRoot, '..', 'ui', '.next/static') // Another common Next.js pattern
 ];
 
 let foundNextPath = null;
@@ -767,6 +773,82 @@ if (!foundNextPath) {
   console.log('Could not find Next.js static files directory (_next)');
   console.log('Searched in these locations:');
   possibleNextPaths.forEach(p => console.log(` - ${p} (exists: ${fs.existsSync(p)})`));
+  
+  // Fallback: try to find any directory with '_next' in its name
+  console.log('Attempting to find any _next directory in the project...');
+  try {
+    // A simple recursive function to find directories with _next in the name
+    const findNextDir = (dir, depth = 0) => {
+      if (depth > 3) return null; // Limit recursion depth
+      
+      try {
+        const entries = fs.readdirSync(dir);
+        
+        // First check if _next exists in this directory
+        if (entries.includes('_next')) {
+          const fullPath = path.join(dir, '_next');
+          if (fs.statSync(fullPath).isDirectory()) {
+            return fullPath;
+          }
+        }
+        
+        // Then check for .next directory
+        if (entries.includes('.next')) {
+          const dotNextDir = path.join(dir, '.next');
+          if (fs.statSync(dotNextDir).isDirectory()) {
+            // Check if _next exists inside .next
+            try {
+              const dotNextEntries = fs.readdirSync(dotNextDir);
+              if (dotNextEntries.includes('_next')) {
+                return path.join(dotNextDir, '_next');
+              }
+              // Also check for static directory
+              if (dotNextEntries.includes('static')) {
+                return path.join(dotNextDir, 'static');
+              }
+            } catch (e) {
+              // Ignore errors reading .next
+            }
+          }
+        }
+        
+        // Recursively check subdirectories
+        for (const entry of entries) {
+          const fullPath = path.join(dir, entry);
+          if (fs.statSync(fullPath).isDirectory() && 
+              !entry.startsWith('.') && 
+              entry !== 'node_modules' && 
+              entry !== 'dist') {
+            const result = findNextDir(fullPath, depth + 1);
+            if (result) return result;
+          }
+        }
+        
+        return null;
+      } catch (e) {
+        return null; // Ignore errors
+      }
+    };
+    
+    // Start from different potential root locations
+    const potentialRoots = [
+      projectRoot,
+      path.join(projectRoot, '..'),
+      path.join(projectRoot, '../..')
+    ];
+    
+    for (const root of potentialRoots) {
+      const nextDir = findNextDir(root);
+      if (nextDir) {
+        console.log(`Found _next directory through search: ${nextDir}`);
+        app.use('/_next', express.static(nextDir));
+        foundNextPath = nextDir;
+        break;
+      }
+    }
+  } catch (e) {
+    console.error('Error searching for _next directory:', e);
+  }
 }
 
 // Serve static files from ui/public
