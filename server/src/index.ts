@@ -35,14 +35,43 @@ const port = process.env.PORT || 3001;
 app.use(cors());
 app.use(express.json());
 
-// Serve static files from test-results directory
+// Determine proper paths based on environment
+const projectRoot = process.cwd();
+console.log(`Running in ${process.env.NODE_ENV === 'production' ? 'production' : 'development'} environment`);
+console.log(`Project root: ${projectRoot}`);
+
+// Serve static files with proper paths
+const uiPublicPath = path.join(projectRoot, 'ui/public');
+console.log(`UI public path: ${uiPublicPath} (exists: ${fs.existsSync(uiPublicPath)})`);
+
+// Serve placeholder UI as top priority
+app.use(express.static(uiPublicPath));
+
+// Serve other static content
 app.use('/test-results', express.static(path.join(__dirname, '../test-results')));
+app.use('/cache', express.static(path.join(projectRoot, 'cache')));
 
-// Serve static files from cache directory
-app.use('/cache', express.static(path.join(process.cwd(), 'cache')));
+// The dashboard path (if used in deployed environment)
+const dashboardPath = '/Users/heesookim/playground/AI_Transformation_Plan_Generator_shadcn/ui/public';
+if (fs.existsSync(dashboardPath)) {
+  app.use('/dashboard', express.static(dashboardPath));
+  console.log(`Dashboard path: ${dashboardPath} (exists: true)`);
+} else {
+  console.log(`Dashboard path: ${dashboardPath} (exists: false)`);
+}
 
-// Serve static files from the public directory
-app.use('/dashboard', express.static('/Users/heesookim/playground/AI_Transformation_Plan_Generator_shadcn/ui/public'));
+// Root route handler - serves index.html if it exists, otherwise returns API message
+app.get('/', (req, res) => {
+  const indexPath = path.join(uiPublicPath, 'index.html');
+  console.log(`Checking for index.html at: ${indexPath} (exists: ${fs.existsSync(indexPath)})`);
+  
+  if (fs.existsSync(indexPath)) {
+    return res.sendFile(indexPath);
+  }
+  
+  // Fallback to API message
+  res.json({ message: 'AI Transformation Plan Generator API is running' });
+});
 
 // Add error handling for static file serving
 app.use('/cache', (err: any, req: any, res: any, next: any) => {
@@ -52,11 +81,6 @@ app.use('/cache', (err: any, req: any, res: any, next: any) => {
     console.error('Error serving static file:', err);
     res.status(500).json({ error: 'Internal server error' });
   }
-});
-
-// Add a root route handler
-app.get('/', (req, res) => {
-  res.json({ message: 'AI Transformation Plan Generator API is running' });
 });
 
 // Helper function to get path to cache directory
@@ -631,14 +655,6 @@ app.get('/api/llm-content/:company', async (req, res) => {
   }
 });
 
-// Add this route handler for serving the placeholder UI
-app.use(express.static(path.join(process.cwd(), 'ui/public')));
-
-// Root route handler - redirect to index.html
-app.get('/', (req, res) => {
-  res.sendFile(path.join(process.cwd(), 'ui/public/index.html'));
-});
-
 // Debug catch-all handler for API routes
 app.get('/api/*', (req, res, next) => {
   return next();
@@ -667,22 +683,6 @@ if (isProduction) {
 // Serve Next.js static files
 app.use('/_next', express.static(path.join(UI_BUILD_PATH, '_next')));
 app.use('/static', express.static(UI_PUBLIC_PATH));
-
-// Root handler for the UI - should come after all API routes
-app.get('/', (req, res) => {
-  res.send(`
-    <!DOCTYPE html>
-    <html>
-      <head>
-        <title>AI Transformation Plan Generator</title>
-        <meta http-equiv="refresh" content="0;url=/dashboard" />
-      </head>
-      <body>
-        <p>Redirecting to dashboard...</p>
-      </body>
-    </html>
-  `);
-});
 
 // Catch-all handler for non-API routes to serve the Next.js app
 app.get('*', (req, res, next) => {
