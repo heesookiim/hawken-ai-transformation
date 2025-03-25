@@ -16,13 +16,15 @@ if (!fs.existsSync(distCacheDir)) {
   fs.mkdirSync(distCacheDir, { recursive: true });
 }
 
-// Ensure the cache.js file exists in dist/utils
-const distCacheFile = path.join(distCacheDir, 'cache.js');
-if (!fs.existsSync(distCacheFile)) {
-  console.log('Cache file not found in dist, copying from src...');
-  
-  // Create a basic cache.js file with the essential functions
-  const cacheContent = `
+// Create cache module directory structure (for directory imports)
+const cacheModuleDir = path.join(distCacheDir, 'cache');
+if (!fs.existsSync(cacheModuleDir)) {
+  console.log('Creating dist/utils/cache directory...');
+  fs.mkdirSync(cacheModuleDir, { recursive: true });
+}
+
+// Cache module content to be written to both file and directory
+const cacheModuleContent = `
 import path from 'path';
 import fs from 'fs';
 
@@ -57,8 +59,16 @@ export function getCachePath(companyId, step) {
 }
 `;
 
-  fs.writeFileSync(distCacheFile, cacheContent);
-  console.log('Cache file created successfully!');
+// Ensure the cache.js file exists in dist/utils
+const distCacheFile = path.join(distCacheDir, 'cache.js');
+if (!fs.existsSync(distCacheFile)) {
+  console.log('Creating cache.js file...');
+  fs.writeFileSync(distCacheFile, cacheModuleContent);
 }
+
+// Create an index.js in the cache directory (for directory imports)
+const cacheIndexFile = path.join(cacheModuleDir, 'index.js');
+console.log('Creating cache/index.js file for directory imports...');
+fs.writeFileSync(cacheIndexFile, cacheModuleContent);
 
 console.log('Cache setup complete.'); 
