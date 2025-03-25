@@ -283,21 +283,14 @@ export const useGeneratedSummaryContent = (
   // Extract key terms from domain knowledge
   const extractKeyTerms = (domainKnowledge: string): string[] => {
     const terms: string[] = [];
-    const boldTermPattern = /\*\*(.*?)\*\*/g;
-    const listItemPattern = /^\s*-\s*(.*)/gm;
+    const listItemPattern = /[-•*]\s*([^-•*\n]+)/g;
     let match;
-    
-    // Extract bold terms
-    while ((match = boldTermPattern.exec(domainKnowledge)) !== null) {
-      terms.push(match[1].trim());
-    }
     
     // Extract list items
     while ((match = listItemPattern.exec(domainKnowledge)) !== null) {
       terms.push(match[1].trim());
     }
     
-    // Use Array.from() instead of spread operator for ES5 compatibility
     return Array.from(new Set(terms)).slice(0, 10); // Remove duplicates and limit to 10 terms
   };
 
