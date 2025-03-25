@@ -42,8 +42,8 @@ app.use('/test-results', express.static(path.join(__dirname, '../test-results'))
 // Serve static files from cache directory
 app.use('/cache', express.static(path.join(process.cwd(), 'cache')));
 
-// Serve static files from the public directory
-app.use('/dashboard', express.static('/Users/heesookim/playground/AI_Transformation_Plan_Generator_shadcn/ui/public'));
+// Remove the hardcoded path that won't exist on Heroku
+// app.use('/dashboard', express.static('/Users/heesookim/playground/AI_Transformation_Plan_Generator_shadcn/ui/public'));
 
 // Add error handling for static file serving
 app.use('/cache', (err: any, req: any, res: any, next: any) => {
@@ -632,30 +632,6 @@ app.get('/api/llm-content/:company', async (req, res) => {
   }
 });
 
-// After all API routes but before app.listen()
-
-// Setup for serving Next.js static files
-const isProduction = process.env.NODE_ENV === 'production';
-const UI_BUILD_PATH = isProduction 
-  ? path.join(process.cwd(), '../ui/.next')
-  : path.join(__dirname, '../../ui/.next');
-const UI_PUBLIC_PATH = isProduction
-  ? path.join(process.cwd(), '../ui/public')
-  : path.join(__dirname, '../../ui/public');
-
-// Check if Next.js build exists and log status
-if (isProduction) {
-  if (fs.existsSync(UI_BUILD_PATH)) {
-    console.log('Found Next.js build at:', UI_BUILD_PATH);
-  } else {
-    console.warn('Next.js build not found at:', UI_BUILD_PATH);
-  }
-}
-
-// Serve Next.js static files
-app.use('/_next', express.static(path.join(UI_BUILD_PATH, '_next')));
-app.use('/static', express.static(UI_PUBLIC_PATH));
-
 // Root handler for the UI - should come after all API routes
 app.get('/', (req, res) => {
   res.send(`
@@ -671,6 +647,10 @@ app.get('/', (req, res) => {
     </html>
   `);
 });
+
+// Configure UI serving with robust path detection
+// Move this before the catch-all handler to ensure it takes precedence
+configureUIServing(app);
 
 // Debug catch-all handler to show where request is going
 app.get('*', (req, res, next) => {
@@ -701,9 +681,6 @@ app.get('*', (req, res, next) => {
     ]
   });
 });
-
-// Configure UI serving with robust path detection
-configureUIServing(app);
 
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);

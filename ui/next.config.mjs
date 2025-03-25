@@ -29,6 +29,19 @@ const nextConfig = {
   // Output as standalone to optimize for deployment
   output: 'standalone',
   
+  // Make sure we're building with the correct output structure for standalone mode
+  experimental: {
+    // These are already enabled in Next.js 15+, but explicitly setting them to be sure
+    serverComponentsExternalPackages: [],
+    outputFileTracingRoot: process.cwd(),
+  },
+  
+  // Properly configure images for deployment
+  images: {
+    domains: ['localhost'],
+    unoptimized: process.env.NODE_ENV === 'production', // Disable image optimization in production for Heroku
+  },
+  
   reactStrictMode: true,
   webpack: (config) => {
     // Add raw-loader for .txt files
