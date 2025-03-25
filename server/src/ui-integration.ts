@@ -91,74 +91,85 @@ export function configureUIServing(app: express.Express) {
     return;
   }
 
-  // Check for standalone build first - this will exist if the UI was built with Next.js standalone option
-  let uiStandalonePath = path.join(uiPath, 'server'); // In root-copied standalone, server dir is directly here
-  if (!fs.existsSync(uiStandalonePath)) {
-    // Try nested paths for standalone output in different configurations
-    const standalonePaths = [
-      path.join(uiPath, 'server'),
-      path.join(process.cwd(), 'server'),
-      path.join(uiPath, '.next/standalone/server'),
-      path.join(process.cwd(), 'ui/.next/standalone/server'),
-      path.join(projectRoot, 'ui/.next/standalone/server')
-    ];
-    
-    for (const standalonePath of standalonePaths) {
-      if (fs.existsSync(standalonePath)) {
-        uiStandalonePath = standalonePath;
-        console.log('Found standalone server directory at:', uiStandalonePath);
-        break;
+  // Now look for .next directory in multiple places
+  const nextPaths = [
+    path.join(uiPath, '.next'),  // Standard location inside UI path
+    path.join(process.cwd(), '.next'),  // Root level .next (copied by our script)
+    path.join(process.cwd(), 'ui/.next'),  // Alternate path
+  ];
+
+  let nextPath = null;
+  console.log('Looking for Next.js build in these locations:');
+  nextPaths.forEach((p, i) => console.log(`  [${i}] ${p} (exists: ${fs.existsSync(p)})`));
+
+  for (const potentialNextPath of nextPaths) {
+    if (fs.existsSync(potentialNextPath)) {
+      nextPath = potentialNextPath;
+      console.log('Found Next.js build at:', nextPath);
+      try {
+        console.log('Next.js build contents:', fs.readdirSync(nextPath));
+      } catch (err) {
+        console.error('Error reading Next.js build contents:', err);
       }
+      break;
+    }
+  }
+
+  // Check for standalone build locations (multiple possible paths)
+  let standalonePath = null;
+  const standalonePaths = [
+    path.join(process.cwd(), 'server'),  // Directly in server folder (copied by our script)
+    path.join(nextPath, 'standalone/server'),  // Inside .next/standalone/server
+    path.join(nextPath, 'server'),  // Inside .next/server 
+    path.join(uiPath, '.next/standalone/server'),  // In ui/.next/standalone/server
+    path.join(process.cwd(), 'ui/.next/standalone/server'),  // Alternate path
+  ].filter(Boolean); // Filter out null paths if nextPath was null
+  
+  console.log('Looking for standalone server in these locations:');
+  standalonePaths.forEach((p, i) => console.log(`  [${i}] ${p} (exists: ${fs.existsSync(p)})`));
+  
+  for (const potentialStandalonePath of standalonePaths) {
+    if (fs.existsSync(potentialStandalonePath)) {
+      standalonePath = potentialStandalonePath;
+      console.log('Found standalone server at:', standalonePath);
+      break;
     }
   }
   
-  // Check if server/pages directory exists in standalone build
-  const hasStandaloneBuild = !!uiStandalonePath && fs.existsSync(uiStandalonePath);
-  const pagesDir = hasStandaloneBuild ? path.join(uiStandalonePath, 'pages') : null;
-  const hasPagesDir = pagesDir ? fs.existsSync(pagesDir) : false;
-  
-  console.log('Standalone server directory exists:', hasStandaloneBuild);
-  console.log('Pages directory exists:', hasPagesDir);
-  
-  if (hasPagesDir) {
-    console.log('Pages directory contents:', fs.readdirSync(pagesDir));
-  }
-  
-  // Find Next.js static assets directory
-  let uiStaticPath = null;
+  // Now look for static files
+  let staticPath = null;
   const staticPaths = [
-    path.join(process.cwd(), '.next/static'),
-    path.join(process.cwd(), 'ui/.next/static'),
-    path.join(uiPath, '.next/static'),
-    path.join(projectRoot, 'ui/.next/static')
-  ];
+    path.join(process.cwd(), '.next/static'),  // Root level .next/static (copied by our script)
+    path.join(nextPath, 'static'),  // Inside nextPath/static
+    path.join(uiPath, '.next/static'),  // Standard location
+    path.join(process.cwd(), 'ui/.next/static'),  // Alternate path
+  ].filter(Boolean);
   
-  for (const staticPath of staticPaths) {
-    if (fs.existsSync(staticPath)) {
-      uiStaticPath = staticPath;
-      console.log('Found static files at:', uiStaticPath);
+  console.log('Looking for static files in these locations:');
+  staticPaths.forEach((p, i) => console.log(`  [${i}] ${p} (exists: ${fs.existsSync(p)})`));
+  
+  for (const potentialStaticPath of staticPaths) {
+    if (fs.existsSync(potentialStaticPath)) {
+      staticPath = potentialStaticPath;
+      console.log('Found static files at:', staticPath);
       break;
     }
   }
   
   // Set up paths for UI files based on what we found
   const uiPublicPath = path.join(uiPath, 'public');
-  const uiNextPath = path.join(uiPath, '.next');
   
-  // Check for Next.js output in main UI path
-  const hasNextOutput = fs.existsSync(uiNextPath);
-
   // Log the availability of key directories
   console.log('UI paths diagnostics:');
   console.log('  UI public directory exists:', fs.existsSync(uiPublicPath));
-  console.log('  UI Next.js build exists:', hasNextOutput);
-  console.log('  UI Standalone build exists:', hasStandaloneBuild);
-  console.log('  UI Static files exist:', !!uiStaticPath);
-
+  console.log('  UI Next.js build exists:', !!nextPath);
+  console.log('  UI Standalone server exists:', !!standalonePath);
+  console.log('  UI Static files exist:', !!staticPath);
+  
   // Serve static files - this is needed in all configurations
-  if (uiStaticPath && fs.existsSync(uiStaticPath)) {
-    app.use('/_next/static', express.static(uiStaticPath));
-    console.log('Serving static assets from:', uiStaticPath);
+  if (staticPath) {
+    app.use('/_next/static', express.static(staticPath));
+    console.log('Serving static assets from:', staticPath);
   }
   
   if (fs.existsSync(uiPublicPath)) {
@@ -166,25 +177,73 @@ export function configureUIServing(app: express.Express) {
     console.log('Serving public files from:', uiPublicPath);
   }
   
-  // Handle standalone build configuration
-  if (hasStandaloneBuild && hasPagesDir) {
-    console.log('Using standalone Next.js build for serving UI');
+  // Find pages directory for serving HTML files
+  let pagesPath = null;
+  const pagesPaths = [
+    // Try different potential locations for the pages directory
+    standalonePath ? path.join(standalonePath, 'pages') : null,
+    nextPath ? path.join(nextPath, 'server/pages') : null,
+    path.join(process.cwd(), 'server/pages'),  // Custom location from our script
+  ].filter(Boolean);
+  
+  console.log('Looking for HTML pages in these locations:');
+  pagesPaths.forEach((p, i) => console.log(`  [${i}] ${p} (exists: ${fs.existsSync(p)})`));
+  
+  for (const potentialPagesPath of pagesPaths) {
+    if (fs.existsSync(potentialPagesPath)) {
+      pagesPath = potentialPagesPath;
+      console.log('Found HTML pages at:', pagesPath);
+      try {
+        console.log('Pages directory contents:', fs.readdirSync(pagesPath));
+      } catch (err) {
+        console.error('Error reading pages directory:', err);
+      }
+      break;
+    }
+  }
+  
+  // Also check for app directory (for app router)
+  let appPath = null;
+  const appPaths = [
+    standalonePath ? path.join(standalonePath, 'app') : null,
+    nextPath ? path.join(nextPath, 'server/app') : null,
+  ].filter(Boolean);
+  
+  for (const potentialAppPath of appPaths) {
+    if (fs.existsSync(potentialAppPath)) {
+      appPath = potentialAppPath;
+      console.log('Found app directory at:', appPath);
+      break;
+    }
+  }
+  
+  // Handle dashboard routes
+  if (pagesPath || appPath) {
+    console.log('Setting up routes with found paths');
+    
+    // Override the root route to redirect to dashboard
+    app.get('/', (req, res) => {
+      res.redirect('/dashboard');
+    });
     
     // Set up the dashboard route
     app.get('/dashboard', (req, res) => {
-      const indexPath = path.join(pagesDir, 'index.html');
-      if (fs.existsSync(indexPath)) {
-        console.log('Serving dashboard from:', indexPath);
-        return res.sendFile(indexPath);
+      // Try pages directory first
+      if (pagesPath) {
+        const indexPath = path.join(pagesPath, 'index.html');
+        if (fs.existsSync(indexPath)) {
+          console.log('Serving dashboard from pages:', indexPath);
+          return res.sendFile(indexPath);
+        }
       }
       
-      // Check for app directory if pages doesn't have index.html
-      const appDir = path.join(uiStandalonePath, 'app');
-      const appIndexPath = fs.existsSync(appDir) ? path.join(appDir, 'index.html') : null;
-      
-      if (appIndexPath && fs.existsSync(appIndexPath)) {
-        console.log('Serving dashboard from app directory:', appIndexPath);
-        return res.sendFile(appIndexPath);
+      // Try app directory second
+      if (appPath) {
+        const appIndexPath = path.join(appPath, 'index.html');
+        if (fs.existsSync(appIndexPath)) {
+          console.log('Serving dashboard from app directory:', appIndexPath);
+          return res.sendFile(appIndexPath);
+        }
       }
       
       // If we can't find the file, return a debug page
@@ -194,11 +253,15 @@ export function configureUIServing(app: express.Express) {
           <body>
             <h1>Dashboard UI Not Found</h1>
             <p>The UI files could not be located. This is a configuration issue.</p>
-            <p>Checked for standalone at: ${uiStandalonePath}</p>
-            <p>Checked for pages at: ${pagesDir}</p>
+            <p>UI path: ${uiPath}</p>
+            <p>Next.js build: ${nextPath}</p>
+            <p>Pages directory: ${pagesPath}</p>
+            <p>App directory: ${appPath}</p>
             <p>Current environment: ${process.env.NODE_ENV}</p>
             <p>Current directory: ${process.cwd()}</p>
             <p>Directory contents: ${JSON.stringify(fs.readdirSync(process.cwd()))}</p>
+            ${nextPath ? `<p>.next contents: ${JSON.stringify(fs.readdirSync(nextPath))}</p>` : ''}
+            ${standalonePath ? `<p>Standalone server contents: ${JSON.stringify(fs.readdirSync(standalonePath))}</p>` : ''}
           </body>
         </html>
       `);
@@ -209,25 +272,48 @@ export function configureUIServing(app: express.Express) {
       const pagePath = req.path.replace(/^\/dashboard\/?/, '');
       console.log('Requested dashboard path:', pagePath);
       
-      // Try standalone pages directory first
-      const htmlPath = path.join(pagesDir, pagePath, 'index.html');
-      if (fs.existsSync(htmlPath)) {
-        console.log('Serving page from:', htmlPath);
-        return res.sendFile(htmlPath);
+      // Try pages directory first
+      if (pagesPath) {
+        // Try path/index.html first
+        const htmlPathWithIndex = path.join(pagesPath, pagePath, 'index.html');
+        if (fs.existsSync(htmlPathWithIndex)) {
+          console.log('Serving page from pages directory (with index):', htmlPathWithIndex);
+          return res.sendFile(htmlPathWithIndex);
+        }
+        
+        // Try path.html
+        const htmlPathDirect = path.join(pagesPath, pagePath + '.html');
+        if (fs.existsSync(htmlPathDirect)) {
+          console.log('Serving dynamic page from pages directory (direct):', htmlPathDirect);
+          return res.sendFile(htmlPathDirect);
+        }
       }
       
-      // Try direct path (for dynamic routes)
-      const directPath = path.join(pagesDir, pagePath + '.html');
-      if (fs.existsSync(directPath)) {
-        console.log('Serving dynamic page from:', directPath);
-        return res.sendFile(directPath);
+      // Try app directory
+      if (appPath) {
+        // App directory structure - try with index.html
+        const appHtmlPath = path.join(appPath, pagePath, 'index.html');
+        if (fs.existsSync(appHtmlPath)) {
+          console.log('Serving page from app directory:', appHtmlPath);
+          return res.sendFile(appHtmlPath);
+        }
       }
       
-      // If that fails, serve the index page to let client-side routing handle it
-      const indexPath = path.join(pagesDir, 'index.html');
-      if (fs.existsSync(indexPath)) {
-        console.log('Falling back to index page for client-side routing');
-        return res.sendFile(indexPath);
+      // If all specific routes fail, fall back to index for client-side routing
+      if (pagesPath) {
+        const indexPath = path.join(pagesPath, 'index.html');
+        if (fs.existsSync(indexPath)) {
+          console.log('Falling back to index page for client-side routing');
+          return res.sendFile(indexPath);
+        }
+      }
+      
+      if (appPath) {
+        const appIndexPath = path.join(appPath, 'index.html');
+        if (fs.existsSync(appIndexPath)) {
+          console.log('Falling back to app index for client-side routing');
+          return res.sendFile(appIndexPath);
+        }
       }
       
       // Last resort: return a message
@@ -238,112 +324,51 @@ export function configureUIServing(app: express.Express) {
             <h1>Dashboard Page Not Found</h1>
             <p>The requested page could not be found. This could be a configuration issue.</p>
             <p>Requested path: ${pagePath}</p>
-            <p>Looked for file at: ${htmlPath}</p>
-            <p>Also tried: ${directPath}</p>
-            <p>Server directory: ${uiStandalonePath}</p>
-            <p>Pages directory exists: ${hasPagesDir}</p>
-            ${hasPagesDir ? `<p>Pages directory contents: ${JSON.stringify(fs.readdirSync(pagesDir))}</p>` : ''}
-          </body>
-        </html>
-      `);
-    });
-    
-    // Override the root route to redirect to dashboard
-    app.get('/', (req, res) => {
-      res.redirect('/dashboard');
-    });
-    
-    return; // Exit early as we've set up the standalone configuration
-  }
-
-  // If we get here, we couldn't find the standalone build - fall back to trying standard Next.js output
-  console.log('No standalone build found, falling back to standard Next.js serving');
-  
-  if (hasNextOutput) {
-    console.log('Using standard Next.js output');
-    app.use('/_next', express.static(path.join(uiNextPath)));
-    
-    // Redirect root to dashboard
-    app.get('/', (req, res) => {
-      res.redirect('/dashboard');
-    });
-    
-    // Check for server/pages output as used in newer Next.js versions
-    const serverPagesDir = path.join(uiNextPath, 'server/pages');
-    const hasServerPages = fs.existsSync(serverPagesDir);
-    
-    if (hasServerPages) {
-      console.log('Found server/pages directory at:', serverPagesDir);
-      
-      // Handle dashboard routes
-      app.get('/dashboard*', (req, res) => {
-        const pagePath = req.path.replace(/^\/dashboard\/?/, '');
-        
-        // Try specific page path first
-        const htmlPath = path.join(serverPagesDir, pagePath, 'index.html');
-        if (fs.existsSync(htmlPath)) {
-          return res.sendFile(htmlPath);
-        }
-        
-        // Try index as fallback for client-side routing
-        const indexPath = path.join(serverPagesDir, 'index.html');
-        if (fs.existsSync(indexPath)) {
-          return res.sendFile(indexPath);
-        }
-        
-        // Last resort - debug page
-        res.status(404).send(`
-          <html>
-            <head><title>Dashboard Not Found</title></head>
-            <body>
-              <h1>Dashboard Not Found</h1>
-              <p>Could not find the dashboard page in standard Next.js output</p>
-              <p>Checked: ${htmlPath}</p>
-              <p>Also tried: ${indexPath}</p>
-              <p>Server/pages exists: ${hasServerPages}</p>
-              ${hasServerPages ? `<p>Directory contents: ${JSON.stringify(fs.readdirSync(serverPagesDir))}</p>` : ''}
-            </body>
-          </html>
-        `);
-      });
-    } else {
-      // Very old Next.js versions or incomplete build
-      console.warn('No server/pages directory found, falling back to basic error page');
-      
-      app.get('/dashboard*', (req, res) => {
-        res.status(404).send(`
-          <html>
-            <head><title>Dashboard Not Found (Old Next.js)</title></head>
-            <body>
-              <h1>Dashboard UI Not Found</h1>
-              <p>This Next.js build appears to be in an older format or is incomplete.</p>
-              <p>No server/pages directory found at: ${serverPagesDir}</p>
-              <p>Next.js directory exists: ${hasNextOutput}</p>
-              <p>Next.js directory contents: ${JSON.stringify(fs.readdirSync(uiNextPath))}</p>
-            </body>
-          </html>
-        `);
-      });
-    }
-  } else {
-    // No Next.js output found at all
-    console.warn('No Next.js build found at all');
-    
-    app.get('/dashboard*', (req, res) => {
-      res.status(404).send(`
-        <html>
-          <head><title>Next.js Build Not Found</title></head>
-          <body>
-            <h1>Next.js Build Not Found</h1>
-            <p>Could not find any Next.js build output in the expected locations.</p>
-            <p>Current working directory: ${process.cwd()}</p>
-            <p>Directory contents: ${JSON.stringify(fs.readdirSync(process.cwd()))}</p>
             <p>UI path: ${uiPath}</p>
-            <p>UI path contents: ${JSON.stringify(fs.readdirSync(uiPath))}</p>
-            <p>This is likely a build configuration issue. Please ensure the Next.js app is properly built with the standalone output option.</p>
+            <p>Next.js build: ${nextPath}</p>
+            <p>Pages directory: ${pagesPath}</p>
+            <p>App directory: ${appPath}</p>
+            <p>Checked files:</p>
+            <ul>
+              ${pagesPath ? `<li>${path.join(pagesPath, pagePath, 'index.html')} (exists: ${fs.existsSync(path.join(pagesPath, pagePath, 'index.html'))})</li>` : ''}
+              ${pagesPath ? `<li>${path.join(pagesPath, pagePath + '.html')} (exists: ${fs.existsSync(path.join(pagesPath, pagePath + '.html'))})</li>` : ''}
+              ${appPath ? `<li>${path.join(appPath, pagePath, 'index.html')} (exists: ${fs.existsSync(path.join(appPath, pagePath, 'index.html'))})</li>` : ''}
+            </ul>
+            ${pagesPath ? `<p>Pages directory contents: ${JSON.stringify(fs.readdirSync(pagesPath))}</p>` : ''}
+            ${appPath ? `<p>App directory contents: ${JSON.stringify(fs.readdirSync(appPath))}</p>` : ''}
           </body>
         </html>
       `);
     });
+    
+    return; // Exit early as we've set up the routes
   }
+  
+  // No pages or app directory was found
+  console.warn('No pages or app directory found, setting up fallback UI routes');
+  
+  // Set up fallback routes
+  app.get('/', (req, res) => {
+    res.redirect('/dashboard');
+  });
+  
+  app.get('/dashboard*', (req, res) => {
+    res.status(404).send(`
+      <html>
+        <head><title>Next.js Build Not Found</title></head>
+        <body>
+          <h1>Next.js Build Not Found</h1>
+          <p>Could not find any Next.js HTML files in the expected locations.</p>
+          <p>UI path: ${uiPath}</p>
+          <p>Next.js build: ${nextPath}</p>
+          <p>Static files: ${staticPath}</p>
+          <p>Current working directory: ${process.cwd()}</p>
+          <p>Directory contents: ${JSON.stringify(fs.readdirSync(process.cwd()))}</p>
+          ${nextPath ? `<p>Next.js contents: ${JSON.stringify(fs.readdirSync(nextPath))}</p>` : ''}
+          <p>This is likely a build configuration issue. Please ensure the Next.js app is properly built with the standalone output option.</p>
+          <p>Environment variables: ${JSON.stringify({ NODE_ENV: process.env.NODE_ENV, PWD: process.env.PWD })}</p>
+        </body>
+      </html>
+    `);
+  });
 } 
