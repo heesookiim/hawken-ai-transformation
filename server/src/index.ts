@@ -23,8 +23,8 @@ const VERBOSE_LOGGING = false;  // Set to true for detailed logs
 // Load environment variables
 dotenv.config();
 
-// Access PUBLIC_PATH
-const publicPath = process.env.PUBLIC_PATH || (() => { throw new Error('PUBLIC_PATH is not defined in the environment variables'); })();
+// Access PUBLIC_PATH with a safe fallback
+const publicPath = process.env.PUBLIC_PATH || path.join(process.cwd(), 'public');
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -628,6 +628,69 @@ app.get('/api/llm-content/:company', async (req, res) => {
       message: 'Failed to retrieve LLM content',
       details: error instanceof Error ? error.message : 'Unknown error'
     });
+  }
+});
+
+// After all API routes but before app.listen()
+
+// Setup for serving Next.js static files
+const isProduction = process.env.NODE_ENV === 'production';
+const UI_BUILD_PATH = isProduction 
+  ? path.join(process.cwd(), '../ui/.next')
+  : path.join(__dirname, '../../ui/.next');
+const UI_PUBLIC_PATH = isProduction
+  ? path.join(process.cwd(), '../ui/public')
+  : path.join(__dirname, '../../ui/public');
+
+// Check if Next.js build exists and log status
+if (isProduction) {
+  if (fs.existsSync(UI_BUILD_PATH)) {
+    console.log('Found Next.js build at:', UI_BUILD_PATH);
+  } else {
+    console.warn('Next.js build not found at:', UI_BUILD_PATH);
+  }
+}
+
+// Serve Next.js static files
+app.use('/_next', express.static(path.join(UI_BUILD_PATH, '_next')));
+app.use('/static', express.static(UI_PUBLIC_PATH));
+
+// Root handler for the UI - should come after all API routes
+app.get('/', (req, res) => {
+  res.send(`
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <title>AI Transformation Plan Generator</title>
+        <meta http-equiv="refresh" content="0;url=/dashboard" />
+      </head>
+      <body>
+        <p>Redirecting to dashboard...</p>
+      </body>
+    </html>
+  `);
+});
+
+// Catch-all handler for non-API routes to serve the Next.js app
+app.get('*', (req, res, next) => {
+  // Skip API routes and existing routes
+  if (req.path.startsWith('/api') || req.path.startsWith('/cache') || req.path.startsWith('/test-results')) {
+    return next();
+  }
+  
+  try {
+    // Try to send the Next.js HTML file
+    const nextHtmlPath = path.join(UI_BUILD_PATH, 'server/pages', req.path, '.html');
+    
+    if (fs.existsSync(nextHtmlPath)) {
+      return res.sendFile(nextHtmlPath);
+    }
+    
+    // Fallback to index.html for client-side routing
+    return res.sendFile(path.join(UI_BUILD_PATH, 'server/pages/index.html'));
+  } catch (error) {
+    console.error('Error serving Next.js file:', error);
+    return res.status(500).json({ error: 'Internal server error' });
   }
 });
 

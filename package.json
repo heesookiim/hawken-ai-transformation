@@ -13,9 +13,12 @@
     "install-all": "npm install && npm run install-server && npm run install-ui",
     "install-server": "cd server && npm install",
     "install-ui": "cd ui && npm install",
-    "build": "cd server && npm run build",
+    "build": "npm run build-ui && npm run build-server",
     "build-server": "cd server && npm run build",
-    "heroku-postbuild": "cd server && npm install --include=dev && npm run build"
+    "build-ui": "cd ui && npm run build",
+    "heroku-postbuild": "echo 'Installing dependencies...' && npm run install-server && npm run install-ui && echo 'Building UI...' && npm run build-ui && echo 'Building server...' && npm run build-server",
+    "clean": "rimraf server/dist ui/.next",
+    "test-integrated": "npm run build && npm start"
   },
   "devDependencies": {
     "@eslint/js": "^9.22.0",
@@ -36,6 +39,6 @@
     "@types/fs-extra": "^11.0.4"
   },
   "engines": {
-    "node": ">=14.0.0"
+    "node": ">=16.0.0"
   }
 }
