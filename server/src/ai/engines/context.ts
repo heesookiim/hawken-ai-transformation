@@ -1,4 +1,4 @@
-import { ScrapedData } from '../../scraper';
+import { ScrapedData } from '../../scraper.js';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import dotenv from 'dotenv';
 import path from 'path';
