@@ -16,7 +16,7 @@
     "build": "npm run build-ui && npm run build-server",
     "build-server": "cd server && npm run build",
     "build-ui": "cd ui && npm run build",
-    "heroku-postbuild": "echo 'Installing dependencies...' && npm run install-server && npm run install-ui && echo 'Creating necessary directories...' && mkdir -p server/dist ui/.next/standalone ui/.next/static && echo 'Building UI with standalone output...' && npm run build-ui && echo 'Building server...' && npm run build-server",
+    "heroku-postbuild": "echo 'Installing dependencies...' && npm run install-server && npm run install-ui && echo 'Creating necessary directories...' && mkdir -p server/dist ui/.next/standalone ui/.next/static && echo 'Building UI with standalone output...' && npm run build-ui && echo 'Copying standalone files...' && ls -la ui/.next/ && cp -r ui/.next/standalone/* . && cp -r ui/.next/static ui/.next/ && echo 'Ensuring server directory is available...' && mkdir -p server/pages && cp -r ui/.next/standalone/server server/ && echo 'Building server...' && npm run build-server && echo 'Listing deployment directory contents:' && ls -la && echo 'UI .next directory:' && ls -la ui/.next && echo 'Server directory:' && ls -la server/",
     "clean": "rimraf server/dist ui/.next",
     "test-integrated": "npm run build && npm start"
   },
