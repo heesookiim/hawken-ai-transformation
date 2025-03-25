@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import dotenv from 'dotenv';
-import { getCompanyId, getCachePath } from '../utils/cache';
+import { getCompanyId, getCachePath } from '../utils/cache.js';
 
 // Load environment variables
 dotenv.config();
