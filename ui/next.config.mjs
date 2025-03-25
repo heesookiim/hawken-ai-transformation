@@ -4,9 +4,23 @@ const nextConfig = {
   
   // Add proxy configuration for API requests
   async rewrites() {
-    // In production mode, we don't need to proxy API requests since they'll be served from the same domain
+    // In production mode, proxy API requests to Heroku
     if (process.env.NODE_ENV === 'production') {
-      return [];
+      console.log('Production mode: Proxying API requests to Heroku');
+      return [
+        {
+          source: '/api/:path*',
+          destination: 'https://hawken-ai-transformation-27d8ee0ab1a5.herokuapp.com/api/:path*'
+        },
+        {
+          source: '/cache/:path*',
+          destination: 'https://hawken-ai-transformation-27d8ee0ab1a5.herokuapp.com/cache/:path*'
+        },
+        {
+          source: '/test-results/:path*',
+          destination: 'https://hawken-ai-transformation-27d8ee0ab1a5.herokuapp.com/test-results/:path*'
+        }
+      ];
     }
     
     // In development mode, proxy requests to the local dev server
@@ -41,6 +55,7 @@ const nextConfig = {
       "avatars.githubusercontent.com",
       "*.cloudfront.net",
       "*.amazonaws.com",
+      "hawken-ai-transformation-27d8ee0ab1a5.herokuapp.com"
     ],
     remotePatterns: [
       {
@@ -51,6 +66,10 @@ const nextConfig = {
         protocol: "https",
         hostname: "*.amazonaws.com",
       },
+      {
+        protocol: "https",
+        hostname: "hawken-ai-transformation-27d8ee0ab1a5.herokuapp.com",
+      }
     ],
     unoptimized: process.env.NODE_ENV === 'production', // Disable image optimization in production for Heroku
   },
