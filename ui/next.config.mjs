@@ -52,8 +52,6 @@ const nextConfig = {
 
   // Add these options for Heroku
   experimental: {
-    // Enable output file tracing to reduce build size and improve performance
-    outputFileTracingRoot: process.cwd(),
     // Optimize Heroku builds
     optimizePackageImports: ['@radix-ui', 'lucide-react'],
   },
