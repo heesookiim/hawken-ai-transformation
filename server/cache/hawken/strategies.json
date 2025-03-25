@@ -1,0 +1,47 @@
+[
+  {
+    "id": "lead_qualification_llm",
+    "title": "AI-Powered Lead Qualification and Enrichment",
+    "description": "Leverage an LLM to analyze lead data (e.g., website activity, form submissions, social media presence, email interactions) and external data sources (e.g., company size, industry, news articles) to automatically score and prioritize leads. The LLM will generate a concise summary of each lead's potential, including key interests, pain points, and likelihood of conversion. This summary will be presented to sales teams, enabling them to focus on high-potential leads and personalize their outreach. The LLM adds unique value by providing nuanced insights beyond simple rule-based scoring, understanding the context of lead interactions and identifying hidden opportunities. This will improve lead conversion rates and reduce customer acquisition costs.",
+    "impact": "High",
+    "complexity": "Medium",
+    "timeframe": "Medium-term",
+    "category": "automation"
+  },
+  {
+    "id": "personalized_customer_experience_llm",
+    "title": "LLM-Driven Personalized Customer Journey Orchestration",
+    "description": "Utilize an LLM to analyze customer data from various sources (CRM, marketing automation, support tickets, surveys) to create personalized customer profiles. The LLM will identify key customer segments, predict their needs, and generate tailored marketing messages, product recommendations, and support responses. The LLM will also analyze customer feedback and sentiment to proactively address potential issues and improve customer satisfaction. The LLM adds unique value by understanding the nuances of customer language and sentiment, enabling more empathetic and effective communication. This will increase customer lifetime value and brand loyalty.",
+    "impact": "High",
+    "complexity": "High",
+    "timeframe": "Long-term",
+    "category": "content generation"
+  },
+  {
+    "id": "knowledge_management_llm",
+    "title": "Intelligent Knowledge Base with LLM-Powered Search and Summarization",
+    "description": "Implement an LLM-powered knowledge base that allows employees to quickly find relevant information. The LLM will index and understand the content of all internal documents (e.g., policies, procedures, training materials, FAQs). When an employee searches for information, the LLM will not only identify relevant documents but also generate concise summaries of the key information within those documents. The LLM will also be able to answer questions directly, drawing information from multiple sources and synthesizing it into a coherent response. The LLM adds unique value by understanding the semantic meaning of documents and providing more accurate and relevant search results than traditional keyword-based search. This will improve employee productivity and reduce information silos.",
+    "impact": "Medium",
+    "complexity": "Medium",
+    "timeframe": "Medium-term",
+    "category": "knowledge management"
+  },
+  {
+    "id": "fraud_detection_llm",
+    "title": "LLM-Based Fraudulent Activity Detection",
+    "description": "Develop an LLM-based system to analyze textual data (e.g., transaction descriptions, customer communications, internal memos) for patterns indicative of fraudulent activity. The LLM will be trained to identify suspicious language, inconsistencies, and anomalies that may indicate fraud. The system will generate alerts for potential fraudulent activities, providing investigators with a summary of the suspicious indicators and relevant context. The LLM adds unique value by understanding the subtle nuances of language and identifying patterns that would be difficult for humans to detect. This will reduce financial losses and reputational damage.",
+    "impact": "Medium",
+    "complexity": "High",
+    "timeframe": "Long-term",
+    "category": "text analysis"
+  },
+  {
+    "id": "document_analysis_llm",
+    "title": "Automated Invoice Processing with Visual Understanding",
+    "description": "Implement an LLM-powered system to automate invoice processing. The system will use an LLM with visual understanding capabilities (e.g., GPT-4 Vision) to extract information from scanned invoices, including vendor name, invoice number, date, line items, and total amount. The LLM will then validate the extracted information against existing data in the ERP system and flag any discrepancies. The LLM will also generate a summary of the invoice for review by accounting staff. The LLM adds unique value by being able to process invoices in various formats and layouts, even if they are handwritten or poorly scanned. This will reduce manual data entry and improve the accuracy of invoice processing.",
+    "impact": "Medium",
+    "complexity": "Medium",
+    "timeframe": "Medium-term",
+    "category": "visual understanding"
+  }
+]

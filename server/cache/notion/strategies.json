@@ -1,0 +1,47 @@
+[
+  {
+    "id": "user_onboarding_llm",
+    "title": "AI-Powered Personalized Onboarding Assistant",
+    "description": "Develop an LLM-powered onboarding assistant that analyzes a new user's role, team, and initial workspace activity to generate a personalized onboarding guide. The LLM will understand the user's context and create a tailored document highlighting relevant features, templates, and workflows. It will also provide examples specific to their use case. This addresses the challenge of high customization leading to slower adoption. The LLM leverages its understanding and generation capabilities to create a unique onboarding experience for each user, improving engagement and reducing churn. A base LLM with strong text generation capabilities (e.g., GPT-4) would be appropriate.",
+    "impact": "High",
+    "complexity": "Medium",
+    "timeframe": "Medium-term",
+    "category": "content generation"
+  },
+  {
+    "id": "intelligent_knowledge_retrieval",
+    "title": "LLM-Enhanced Semantic Search and Knowledge Synthesis",
+    "description": "Implement an LLM-powered semantic search engine that goes beyond keyword matching to understand the meaning and context of user queries. The LLM will analyze the query and search across all workspace content (documents, notes, tasks) to identify relevant information. It will then synthesize the information into a concise summary, providing users with a quick overview of the key findings. This addresses the challenge of inefficient content discovery. The LLM's understanding and text analysis capabilities are crucial for providing more relevant and insightful search results compared to traditional search methods. A base LLM with strong text understanding and summarization capabilities (e.g., Claude) would be appropriate.",
+    "impact": "High",
+    "complexity": "Medium",
+    "timeframe": "Medium-term",
+    "category": "knowledge management"
+  },
+  {
+    "id": "proactive_user_insights",
+    "title": "AI-Driven User Needs Analysis and Proactive Support",
+    "description": "Utilize an LLM to analyze user activity logs, support tickets, and feedback to identify recurring pain points and unmet needs. The LLM will extract key themes and sentiment from user interactions, providing insights into areas where the platform can be improved. Based on these insights, the LLM can generate proactive support messages or suggest relevant features to users. This addresses the challenge of reactive support and missed opportunities for improvement. The LLM's text analysis and sentiment analysis capabilities are essential for understanding user needs and providing personalized support. A base LLM with strong text analysis and sentiment analysis capabilities (e.g., Gemini) would be appropriate.",
+    "impact": "Medium",
+    "complexity": "Medium",
+    "timeframe": "Medium-term",
+    "category": "text analysis"
+  },
+  {
+    "id": "automated_meeting_summarization",
+    "title": "Automated Meeting Note Summarization and Action Item Extraction",
+    "description": "Integrate an LLM to automatically summarize meeting notes stored within Notion workspaces. The LLM will analyze the meeting transcript or notes and generate a concise summary of the key discussion points and decisions made. It will also extract action items and assign them to the relevant team members. This addresses the challenge of extracting insights from data stored within Notion. The LLM's understanding and summarization capabilities are crucial for providing a quick and efficient way to review meeting outcomes. A base LLM with strong text understanding and summarization capabilities (e.g., GPT-4) would be appropriate.",
+    "impact": "Medium",
+    "complexity": "Medium",
+    "timeframe": "Short-term",
+    "category": "automation"
+  },
+  {
+    "id": "document_image_analysis",
+    "title": "LLM-Powered Document Understanding and Data Extraction from Images",
+    "description": "Leverage a multimodal LLM (e.g., GPT-4 Vision) to analyze images of documents uploaded to Notion. The LLM will perform OCR to extract text from the image and then use its understanding capabilities to identify key information, such as dates, names, addresses, and amounts. This extracted data can then be automatically populated into Notion databases or used to trigger workflows. This addresses the challenge of extracting data from various sources, including images. The LLM's visual understanding and information extraction capabilities are essential for automating data entry and improving document processing efficiency. A multimodal LLM with strong OCR and text understanding capabilities (e.g., GPT-4 Vision) would be appropriate.",
+    "impact": "Medium",
+    "complexity": "Medium",
+    "timeframe": "Medium-term",
+    "category": "visual understanding"
+  }
+]
