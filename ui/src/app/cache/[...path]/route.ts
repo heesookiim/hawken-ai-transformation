@@ -44,13 +44,45 @@ export async function GET(
       },
     });
     
-    // Get the response body
-    const data = await response.json();
+    // Check if response is ok
+    if (!response.ok) {
+      console.error(`[Cache Route] Heroku API returned status: ${response.status}`);
+      return NextResponse.json(
+        { error: `Heroku API returned status: ${response.status}` },
+        { status: response.status, headers: corsHeaders }
+      );
+    }
     
-    // Return the response with CORS headers
-    return NextResponse.json(data, {
+    // Check Content-Type to handle binary responses
+    const contentType = response.headers.get('Content-Type');
+    
+    // For JSON responses
+    if (contentType?.includes('application/json')) {
+      try {
+        const data = await response.json();
+        return NextResponse.json(data, {
+          status: response.status,
+          headers: corsHeaders,
+        });
+      } catch (jsonError) {
+        console.error('[Cache Route] Failed to parse JSON:', jsonError);
+        return NextResponse.json(
+          { error: 'Failed to parse JSON response' },
+          { status: 500, headers: corsHeaders }
+        );
+      }
+    }
+    
+    // For binary or other responses, forward the response as-is
+    const blob = await response.blob();
+    const headers = {
+      ...corsHeaders,
+      'Content-Type': contentType || 'application/octet-stream',
+    };
+    
+    return new NextResponse(blob, {
       status: response.status,
-      headers: corsHeaders,
+      headers,
     });
   } catch (error) {
     console.error(`[Cache Route] Error proxying GET request to ${url}:`, error);

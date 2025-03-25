@@ -6,19 +6,10 @@ import { CompanyData, IndustryInsights } from '@/types/api';
 export const getApiBaseUrl = () => {
   // In browser context
   if (typeof window !== 'undefined') {
-    // For production deployment on Vercel, use the configured Heroku URL
+    // For production deployment on Vercel, use relative URLs to leverage our API routes
     if (process.env.NODE_ENV === 'production') {
-      const herokuUrl = process.env.NEXT_PUBLIC_HEROKU_API_URL;
-      
-      // Make sure the URL is valid
-      if (herokuUrl && (herokuUrl.startsWith('http://') || herokuUrl.startsWith('https://'))) {
-        // Remove trailing slash if present to prevent double-slash issues
-        return herokuUrl.endsWith('/') ? herokuUrl.slice(0, -1) : herokuUrl;
-      } else {
-        console.warn('Invalid Heroku URL format - should be https://your-app.herokuapp.com');
-        // Use hardcoded fallback without trailing slash
-        return 'https://hawken-ai-transformation-27d8ee0ab1a5.herokuapp.com';
-      }
+      console.log('Using relative URLs for production to leverage Next.js API routes');
+      return ''; // Use relative URLs so requests go through our Next.js API routes
     }
   }
   
@@ -32,9 +23,14 @@ const API_URL = getApiBaseUrl();
 
 // For debugging
 if (typeof window !== 'undefined') {
-  console.log(`API calls will be made to: ${API_URL}`);
+  const baseUrl = API_URL ? API_URL : 'relative URLs';
+  console.log(`API calls will be made to: ${baseUrl}`);
   console.log(`Environment: ${process.env.NODE_ENV}`);
   console.log(`Available env vars: NEXT_PUBLIC_API_URL=${process.env.NEXT_PUBLIC_API_URL}, NEXT_PUBLIC_HEROKU_API_URL=${process.env.NEXT_PUBLIC_HEROKU_API_URL}`);
+  
+  if (process.env.NODE_ENV === 'production' && !API_URL) {
+    console.log('Using Next.js API routes for proxying requests to Heroku backend - this avoids CORS issues');
+  }
 }
 
 export type { CompanyData, IndustryInsights };
