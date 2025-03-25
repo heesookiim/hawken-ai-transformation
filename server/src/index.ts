@@ -42,6 +42,8 @@ app.use(cors({
     'http://localhost:3001',
     // Add the specific Vercel deployment URL
     'https://hawken-ai-transformation-vnaj.vercel.app',
+    // Add the git-main deployment URL
+    'https://hawken-ai-transformation-vnaj-git-main-heesookiims-projects.vercel.app',
     // You might need to add both https and http versions
     VERCEL_URL.replace('https://', 'http://'),
     // Add any other production domains

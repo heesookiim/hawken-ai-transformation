@@ -3,7 +3,7 @@ import { AIOpportunity } from '@/types/aiOpportunity';
 import { CompanyData, IndustryInsights } from '@/types/api';
 
 // Dynamic API URL that works in both environments
-const getApiBaseUrl = () => {
+export const getApiBaseUrl = () => {
   // In browser context
   if (typeof window !== 'undefined') {
     // For production deployment on Vercel, use the configured Heroku URL
@@ -16,13 +16,16 @@ const getApiBaseUrl = () => {
         return herokuUrl.endsWith('/') ? herokuUrl.slice(0, -1) : herokuUrl;
       } else {
         console.warn('Invalid Heroku URL format - should be https://your-app.herokuapp.com');
+        // Use hardcoded fallback without trailing slash
         return 'https://hawken-ai-transformation-27d8ee0ab1a5.herokuapp.com';
       }
     }
   }
   
   // In development or SSR in production, use the configured URL or default to localhost
-  return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+  // Also remove any trailing slash from this URL
+  return apiUrl.endsWith('/') ? apiUrl.slice(0, -1) : apiUrl;
 };
 
 const API_URL = getApiBaseUrl();
