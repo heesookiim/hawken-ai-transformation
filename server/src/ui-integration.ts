@@ -27,8 +27,14 @@ export function configureUIServing(app: express.Express) {
     path.join(projectRoot, '..', 'ui'),
     path.join(process.cwd(), 'ui'),
     // In case the structure is different
-    path.join(process.cwd(), '..', 'ui')
+    path.join(process.cwd(), '..', 'ui'),
+    // Special path for standalone Next.js builds
+    path.join(process.cwd(), 'ui/.next/standalone')
   ];
+
+  // Log all paths being checked
+  console.log('Checking for UI in these locations:');
+  possiblePaths.forEach((p, i) => console.log(`  [${i}] ${p} (exists: ${fs.existsSync(p)})`));
 
   // Find the first existing UI path
   let uiPath = null;
@@ -48,11 +54,68 @@ export function configureUIServing(app: express.Express) {
   // Set up paths for UI files
   const uiPublicPath = path.join(uiPath, 'public');
   const uiNextPath = path.join(uiPath, '.next');
+  const uiStandalonePath = path.join(projectRoot, 'ui/.next/standalone');
+  const uiStaticPath = path.join(projectRoot, 'ui/.next/static');
 
+  // Check for standalone build
+  const hasStandaloneBuild = fs.existsSync(uiStandalonePath);
+  
   // Log the availability of key directories
-  console.log('UI public directory exists:', fs.existsSync(uiPublicPath));
-  console.log('UI Next.js build exists:', fs.existsSync(uiNextPath));
+  console.log('UI paths diagnostics:');
+  console.log('  UI public directory exists:', fs.existsSync(uiPublicPath));
+  console.log('  UI Next.js build exists:', fs.existsSync(uiNextPath));
+  console.log('  UI Standalone build exists:', hasStandaloneBuild);
+  if (hasStandaloneBuild) {
+    console.log('  UI Static build exists:', fs.existsSync(uiStaticPath));
+  }
 
+  // Attempt to serve from standalone build first if it exists (better for Heroku)
+  if (hasStandaloneBuild) {
+    console.log('Using standalone Next.js build for serving UI');
+    
+    // Serve static files from the standalone build
+    if (fs.existsSync(path.join(uiStandalonePath, 'public'))) {
+      app.use(express.static(path.join(uiStandalonePath, 'public')));
+    }
+    
+    // Serve Next.js static assets
+    if (fs.existsSync(uiStaticPath)) {
+      app.use('/_next/static', express.static(path.join(uiStaticPath)));
+    }
+    
+    // Set up the dashboard route
+    app.get('/dashboard', (req, res) => {
+      res.sendFile(path.join(uiStandalonePath, 'server/pages/index.html'));
+    });
+    
+    // Handle dashboard routes with parameters
+    app.get('/dashboard/*', (req, res) => {
+      const pagePath = req.path.replace(/^\/dashboard\/?/, '');
+      const htmlPath = path.join(uiStandalonePath, 'server/pages', pagePath, 'index.html');
+      
+      if (fs.existsSync(htmlPath)) {
+        return res.sendFile(htmlPath);
+      }
+      
+      // If that fails, serve the index page to let client-side routing handle it
+      const indexPath = path.join(uiStandalonePath, 'server/pages/index.html');
+      if (fs.existsSync(indexPath)) {
+        return res.sendFile(indexPath);
+      }
+      
+      // Last resort: return a message
+      res.status(404).send('UI files not found. Please ensure the Next.js app is properly built.');
+    });
+    
+    // Override the root route to redirect to dashboard
+    app.get('/', (req, res) => {
+      res.redirect('/dashboard');
+    });
+    
+    return; // Exit early as we've set up the standalone configuration
+  }
+
+  // Fall back to standard Next.js serving if standalone build not found
   // Only attempt to serve UI files if they exist
   if (fs.existsSync(uiPublicPath)) {
     // Serve UI public files

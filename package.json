@@ -16,7 +16,7 @@
     "build": "npm run build-ui && npm run build-server",
     "build-server": "cd server && npm run build",
     "build-ui": "cd ui && npm run build",
-    "heroku-postbuild": "echo 'Installing server dependencies...' && npm run install-server && echo 'Creating necessary directories...' && mkdir -p server/dist && echo 'Building server...' && npm run build-server",
+    "heroku-postbuild": "echo 'Installing dependencies...' && npm run install-server && npm run install-ui && echo 'Creating necessary directories...' && mkdir -p server/dist ui/.next/standalone ui/.next/static && echo 'Building UI with standalone output...' && npm run build-ui && echo 'Building server...' && npm run build-server",
     "clean": "rimraf server/dist ui/.next",
     "test-integrated": "npm run build && npm start"
   },
@@ -39,6 +39,7 @@
     "@types/fs-extra": "^11.0.4"
   },
   "engines": {
-    "node": ">=16.0.0"
+    "node": ">=18.17.0",
+    "npm": ">=9.6.7"
   }
 }

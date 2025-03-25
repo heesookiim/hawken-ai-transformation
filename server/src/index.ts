@@ -9,8 +9,7 @@ import { calculateOpportunityScore, calculateCombinedScore } from './utils/scori
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { getCompanyId } from './utils/cache.js';
 import { loadLLMContent, generateLLMContent } from './ai/llmContent.js';
-// Temporarily comment out UI integration
-// import { configureUIServing } from './ui-integration.js';
+import { configureUIServing } from './ui-integration.js';
 
 // API Endpoints Summary:
 // - /api/generate: Unified endpoint for both proposal generation and LLM content generation
@@ -43,8 +42,8 @@ app.use('/test-results', express.static(path.join(__dirname, '../test-results'))
 // Serve static files from cache directory
 app.use('/cache', express.static(path.join(process.cwd(), 'cache')));
 
-// Remove hardcoded path to UI public directory
-// app.use('/dashboard', express.static('/Users/heesookim/playground/AI_Transformation_Plan_Generator_shadcn/ui/public'));
+// Serve static files from the public directory
+app.use('/dashboard', express.static('/Users/heesookim/playground/AI_Transformation_Plan_Generator_shadcn/ui/public'));
 
 // Add error handling for static file serving
 app.use('/cache', (err: any, req: any, res: any, next: any) => {
@@ -58,12 +57,7 @@ app.use('/cache', (err: any, req: any, res: any, next: any) => {
 
 // Add a root route handler
 app.get('/', (req, res) => {
-  res.json({ 
-    message: 'AI Transformation Plan Generator API is running',
-    redirectTo: '/api',
-    appStatus: 'API Only Mode - UI temporarily disabled',
-    uiInfo: 'Frontend UI is currently in maintenance mode. Please use API endpoints directly.'
-  });
+  res.json({ message: 'AI Transformation Plan Generator API is running' });
 });
 
 // Helper function to get path to cache directory
@@ -638,10 +632,56 @@ app.get('/api/llm-content/:company', async (req, res) => {
   }
 });
 
+// After all API routes but before app.listen()
+
+// Setup for serving Next.js static files
+const isProduction = process.env.NODE_ENV === 'production';
+const UI_BUILD_PATH = isProduction 
+  ? path.join(process.cwd(), '../ui/.next')
+  : path.join(__dirname, '../../ui/.next');
+const UI_PUBLIC_PATH = isProduction
+  ? path.join(process.cwd(), '../ui/public')
+  : path.join(__dirname, '../../ui/public');
+
+// Check if Next.js build exists and log status
+if (isProduction) {
+  if (fs.existsSync(UI_BUILD_PATH)) {
+    console.log('Found Next.js build at:', UI_BUILD_PATH);
+  } else {
+    console.warn('Next.js build not found at:', UI_BUILD_PATH);
+  }
+}
+
+// Serve Next.js static files
+app.use('/_next', express.static(path.join(UI_BUILD_PATH, '_next')));
+app.use('/static', express.static(UI_PUBLIC_PATH));
+
+// Root handler for the UI - should come after all API routes
+app.get('/', (req, res) => {
+  res.send(`
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <title>AI Transformation Plan Generator</title>
+        <meta http-equiv="refresh" content="0;url=/dashboard" />
+      </head>
+      <body>
+        <p>Redirecting to dashboard...</p>
+      </body>
+    </html>
+  `);
+});
+
 // Debug catch-all handler to show where request is going
 app.get('*', (req, res, next) => {
-  // Skip API routes and existing routes
-  if (req.path.startsWith('/api') || req.path.startsWith('/cache') || req.path.startsWith('/test-results')) {
+  // Skip API routes, existing routes, and dashboard routes (handled by UI integration)
+  if (req.path.startsWith('/api') || 
+      req.path.startsWith('/cache') || 
+      req.path.startsWith('/test-results') ||
+      req.path.startsWith('/dashboard') ||
+      req.path === '/' ||
+      req.path.startsWith('/_next') ||
+      req.path.startsWith('/public')) {
     return next();
   }
   
@@ -656,14 +696,14 @@ app.get('*', (req, res, next) => {
       '/api/cache-status/:company',
       '/api/analysis/:company',
       '/api/cache/:company/:file',
-      '/api/llm-content/:company'
+      '/api/llm-content/:company',
+      '/dashboard - UI interface'
     ]
   });
 });
 
-// Near the end of the file, comment out the UI configuration:
 // Configure UI serving with robust path detection
-// configureUIServing(app);
+configureUIServing(app);
 
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
