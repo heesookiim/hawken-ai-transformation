@@ -9,6 +9,7 @@ import { calculateOpportunityScore, calculateCombinedScore } from './utils/scori
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { getCompanyId } from './utils/cache.js';
 import { loadLLMContent, generateLLMContent } from './ai/llmContent.js';
+import { configureUIServing } from './ui-integration.js';
 
 // API Endpoints Summary:
 // - /api/generate: Unified endpoint for both proposal generation and LLM content generation
@@ -633,66 +634,8 @@ app.get('/api/llm-content/:company', async (req, res) => {
 
 // After all API routes but before app.listen()
 
-// Setup for serving Next.js static files
-const isProduction = process.env.NODE_ENV === 'production';
-const UI_BUILD_PATH = isProduction 
-  ? path.join(process.cwd(), '../ui/.next')
-  : path.join(__dirname, '../../ui/.next');
-const UI_PUBLIC_PATH = isProduction
-  ? path.join(process.cwd(), '../ui/public')
-  : path.join(__dirname, '../../ui/public');
-
-// Check if Next.js build exists and log status
-if (isProduction) {
-  if (fs.existsSync(UI_BUILD_PATH)) {
-    console.log('Found Next.js build at:', UI_BUILD_PATH);
-  } else {
-    console.warn('Next.js build not found at:', UI_BUILD_PATH);
-  }
-}
-
-// Serve Next.js static files
-app.use('/_next', express.static(path.join(UI_BUILD_PATH, '_next')));
-app.use('/static', express.static(UI_PUBLIC_PATH));
-
-// Root handler for the UI - should come after all API routes
-app.get('/', (req, res) => {
-  res.send(`
-    <!DOCTYPE html>
-    <html>
-      <head>
-        <title>AI Transformation Plan Generator</title>
-        <meta http-equiv="refresh" content="0;url=/dashboard" />
-      </head>
-      <body>
-        <p>Redirecting to dashboard...</p>
-      </body>
-    </html>
-  `);
-});
-
-// Catch-all handler for non-API routes to serve the Next.js app
-app.get('*', (req, res, next) => {
-  // Skip API routes and existing routes
-  if (req.path.startsWith('/api') || req.path.startsWith('/cache') || req.path.startsWith('/test-results')) {
-    return next();
-  }
-  
-  try {
-    // Try to send the Next.js HTML file
-    const nextHtmlPath = path.join(UI_BUILD_PATH, 'server/pages', req.path, '.html');
-    
-    if (fs.existsSync(nextHtmlPath)) {
-      return res.sendFile(nextHtmlPath);
-    }
-    
-    // Fallback to index.html for client-side routing
-    return res.sendFile(path.join(UI_BUILD_PATH, 'server/pages/index.html'));
-  } catch (error) {
-    console.error('Error serving Next.js file:', error);
-    return res.status(500).json({ error: 'Internal server error' });
-  }
-});
+// Configure UI serving with robust path detection
+configureUIServing(app);
 
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
