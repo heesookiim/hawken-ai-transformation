@@ -7,15 +7,15 @@
     "dev": "concurrently \"npm run server-dev\" \"npm run ui-dev\"",
     "server-dev": "cd server && npm run dev",
     "ui-dev": "cd ui && npm run dev",
-    "start": "concurrently \"npm run server\" \"npm run ui\"",
+    "start": "cd server && npm start",
     "server": "cd server && npm start",
     "ui": "cd ui && npm start",
     "install-all": "npm install && npm run install-server && npm run install-ui",
     "install-server": "cd server && npm install",
     "install-ui": "cd ui && npm install",
-    "build": "npm run build-server && npm run build-ui",
+    "build": "cd server && npm run build",
     "build-server": "cd server && npm run build",
-    "build-ui": "cd ui && npx next build"
+    "heroku-postbuild": "cd server && npm install && npm run build"
   },
   "devDependencies": {
     "@eslint/js": "^9.22.0",
