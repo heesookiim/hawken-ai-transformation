@@ -12,7 +12,8 @@ const getApiBaseUrl = () => {
       
       // Make sure the URL is valid
       if (herokuUrl && (herokuUrl.startsWith('http://') || herokuUrl.startsWith('https://'))) {
-        return herokuUrl;
+        // Remove trailing slash if present to prevent double-slash issues
+        return herokuUrl.endsWith('/') ? herokuUrl.slice(0, -1) : herokuUrl;
       } else {
         console.warn('Invalid Heroku URL format - should be https://your-app.herokuapp.com');
         return 'https://hawken-ai-transformation-27d8ee0ab1a5.herokuapp.com';

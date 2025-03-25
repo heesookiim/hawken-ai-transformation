@@ -4,21 +4,25 @@ const nextConfig = {
   
   // Add proxy configuration for API requests
   async rewrites() {
+    // Get base URL without trailing slash
+    const herokuBaseUrl = process.env.NEXT_PUBLIC_HEROKU_API_URL || 'https://hawken-ai-transformation-27d8ee0ab1a5.herokuapp.com';
+    const cleanBaseUrl = herokuBaseUrl.endsWith('/') ? herokuBaseUrl.slice(0, -1) : herokuBaseUrl;
+    
     // In production mode, proxy API requests to Heroku
     if (process.env.NODE_ENV === 'production') {
-      console.log('Production mode: Proxying API requests to Heroku');
+      console.log(`Production mode: Proxying API requests to ${cleanBaseUrl}`);
       return [
         {
           source: '/api/:path*',
-          destination: 'https://hawken-ai-transformation-27d8ee0ab1a5.herokuapp.com/api/:path*'
+          destination: `${cleanBaseUrl}/api/:path*`
         },
         {
           source: '/cache/:path*',
-          destination: 'https://hawken-ai-transformation-27d8ee0ab1a5.herokuapp.com/cache/:path*'
+          destination: `${cleanBaseUrl}/cache/:path*`
         },
         {
           source: '/test-results/:path*',
-          destination: 'https://hawken-ai-transformation-27d8ee0ab1a5.herokuapp.com/test-results/:path*'
+          destination: `${cleanBaseUrl}/test-results/:path*`
         }
       ];
     }
